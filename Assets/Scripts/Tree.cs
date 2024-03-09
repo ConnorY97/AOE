@@ -17,4 +17,9 @@ public class Tree : MonoBehaviour
     {
         
     }
+
+    private void OnMouseDown()
+    {
+        GameManager.Instance.SetClickedObject(gameObject);
+    }
 }
