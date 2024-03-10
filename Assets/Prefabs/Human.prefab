@@ -121,6 +121,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c82d4b3f56147d428a8cfe8b2aa735a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mIcon: {fileID: 21300000, guid: 94f0e40fabea1c94ba895d27b2c562c7, type: 3}
+  mChopTime: 2
+  mChopDamage: 10
 --- !u!195 &904407224475468565
 NavMeshAgent:
   m_ObjectHideFlags: 0
