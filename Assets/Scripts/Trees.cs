@@ -6,16 +6,15 @@ public class Trees : MonoBehaviour
 {
     private float mHitPoints = 100.0f;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
+    private bool mSelected = false;
 
     // Update is called once per frame
     void Update()
     {
-
+        if (mSelected)
+        {
+            GameManager.Instance.SetHitPointsUI(mHitPoints);
+        }
     }
 
     private void OnMouseDown()
@@ -26,17 +25,20 @@ public class Trees : MonoBehaviour
     // Public Functions
     public bool Chop(float damage)
     {
-        mHitPoints -= mHitPoints;
+        mHitPoints -= damage;
 
         if (mHitPoints <= 0)
         {
-            GameManager.Instance.RegenerateNavSurface();
-            this.gameObject.SetActive(false);
-
+            GameManager.Instance.ChoppedTree(gameObject);
             return false;
         }
 
         return true;
+    }
+
+    public void SetSelected(bool selected)
+    {
+        mSelected = selected;
     }
 
     public float GetHitPoints()

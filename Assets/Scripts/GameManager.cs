@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     private Human mCurrentHuman = null;
     private Trees mCurrentTree = null;
     private NavMeshSurface mGroundSurface = null;
+    private GameObject mChoopedTree = null;
 
     // Singleton Functions
     public static GameManager Instance { get; private set; }
@@ -93,7 +94,8 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (Input.GetKeyDown(KeyCode.Escape))
+            RegenerateNavSurface();
     }
 
 
@@ -111,12 +113,18 @@ public class GameManager : MonoBehaviour
             }
             else if (selectedObject.GetComponent<Trees>() != null)
             {
+                if (mCurrentTree != null)
+                {
+                    mCurrentTree.SetSelected(false);
+                    mCurrentTree = null;
+                }
                 mCurrentTree = selectedObject.GetComponent<Trees>();
-                SetHitPointsUI(mCurrentTree.GetHitPoints());
+                //SetHitPointsUI(mCurrentTree.GetHitPoints());
                 if (mCurrentHuman != null)
                 {
                     mCurrentHuman.SetTarget(mCurrentTree.gameObject);
                 }
+                mCurrentTree.SetSelected(true);
             }
             else
             {
@@ -131,14 +139,32 @@ public class GameManager : MonoBehaviour
         if (mGroundSurface != null)
         {
             mGroundSurface.BuildNavMesh();
+            Debug.Log("Regenerated");
         }
     }
 
     public GameObject GetHome() {  return mHome; }
 
-    // Private Functions
-    private void SetHitPointsUI(float value)
+    public void ChoppedTree(GameObject choppedTree)
+    {
+        if (choppedTree != null)
+        {
+            mTrees.Remove(choppedTree);
+
+            Destroy(choppedTree);
+
+            StartCoroutine(RegenerateDelay(3.0f));
+
+            RegenerateNavSurface();
+        }
+    }
+    public void SetHitPointsUI(float value)
     {
         mSelectedHitPoints.text = $"Current hitpoints: {value}";
+    }
+    // Private Functions
+    private IEnumerator RegenerateDelay(float time)
+    {
+        yield return new WaitForSeconds(time);
     }
 }
