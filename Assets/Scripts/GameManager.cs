@@ -6,6 +6,14 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum ResourceType
+{
+    WOOD,
+    ORE,
+    COAL,
+    MEAT,
+    NONE
+}
 public class GameManager : MonoBehaviour
 {
     // Public Vars
@@ -23,7 +31,7 @@ public class GameManager : MonoBehaviour
     private Human mCurrentHuman = null;
     private Trees mCurrentTree = null;
     private NavMeshSurface mGroundSurface = null;
-    private GameObject mChoopedTree = null;
+    //private GameObject mChoopedTree = null;
 
     // Singleton Functions
     public static GameManager Instance { get; private set; }
@@ -60,6 +68,8 @@ public class GameManager : MonoBehaviour
                     GameObject tmp = Instantiate(mTree, new Vector3(posX, 1, posZ), transform.rotation);
 
                     tmp.name = $"Tree{i}";
+
+                    tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f);
                     mTrees.Add(tmp);
                 }
                 // --
@@ -115,7 +125,7 @@ public class GameManager : MonoBehaviour
             {
                 if (mCurrentTree != null)
                 {
-                    mCurrentTree.SetSelected(false);
+                    //mCurrentTree.SetSelected(false);
                     mCurrentTree = null;
                 }
                 mCurrentTree = selectedObject.GetComponent<Trees>();
@@ -124,7 +134,7 @@ public class GameManager : MonoBehaviour
                 {
                     mCurrentHuman.SetTarget(mCurrentTree.gameObject);
                 }
-                mCurrentTree.SetSelected(true);
+                //mCurrentTree.SetSelected(true);
             }
             else
             {

@@ -52,18 +52,18 @@ public class Human : MonoBehaviour
 
             if (mChopTimer <= 0.0f)
             {
-                if (mTarget.GetComponent<Trees>().Chop(mChopDamage))
-                {
-                    mChopTimer = mChopTime;
-                }
-                else
-                {
-                    mTarget = null;
+                //if (mTarget.GetComponent<Trees>().Chop(mChopDamage))
+                //{
+                //    mChopTimer = mChopTime;
+                //}
+                //else
+                //{
+                //    mTarget = null;
 
-                    mArrived = false;
+                //    mArrived = false;
 
-                    mAgent.SetDestination(GameManager.Instance.GetHome().transform.position);
-                }
+                //    mAgent.SetDestination(GameManager.Instance.GetHome().transform.position);
+                //}
             }
         }
     }
