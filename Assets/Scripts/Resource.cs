@@ -11,7 +11,7 @@ public class Resource : MonoBehaviour
         get { return mType; }
     }
 
-    protected float mHitPoints = 0.0f;
+    protected float mHitPoints = 100.0f;
     public float HitPoints
     {
         get { return mHitPoints; }
@@ -33,14 +33,21 @@ public class Resource : MonoBehaviour
 
     }
 
-    public virtual void Interact(float damage)
+    public virtual void Interact()
     {
-        mHitPoints -= damage;
-        
-        if (mHitPoints < 0.0f)
-        {
-            // Destroyed
-        }
+    }
+
+    public virtual float Interact(float damage)
+    {
+        return 0;
+    }
+
+    public virtual void Collected()
+    {
+        gameObject.SetActive(false);
+        GameManager.Instance.RegenerateNavSurface();
+        GameManager.Instance.ChoppedTree(this);
+        Destroy(gameObject);
     }
 
     public virtual void OnMouseDown()

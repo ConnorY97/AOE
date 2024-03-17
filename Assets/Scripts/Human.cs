@@ -10,14 +10,14 @@ public class Human : MonoBehaviour
 {
     // Public vars
     public Sprite mIcon = null;
-    public float mChopTime = 1.0f;
-    public float mChopDamage = 25.0f;
+    public float mInteractTime = 1.0f;
+    public float mInteractDamage = 25.0f;
     public float mHitPoints = 100.0f;
     // Private vars
     private NavMeshAgent mAgent = null;
-    private GameObject mTarget = null;
+    private Resource mTarget = null;
     private bool mArrived = false;
-    private float mChopTimer = 0.0f;
+    private float mInteractTimer = 0.0f;
 
     // Start is called before the first frame update
     void Start()
@@ -29,7 +29,7 @@ public class Human : MonoBehaviour
             Debug.Log($"Missing agent on {name}");
         }
 
-        mChopTimer = mChopTime;
+        mInteractTimer = mInteractTime;
     }
 
     // Update is called once per frame
@@ -48,28 +48,38 @@ public class Human : MonoBehaviour
 
         if (mArrived && mTarget != null)
         {
-            mChopTimer -= Time.deltaTime;
+            mInteractTimer -= Time.deltaTime;
 
-            if (mChopTimer <= 0.0f)
+            if (mInteractTimer <= 0.0f)
             {
-                //if (mTarget.GetComponent<Trees>().Chop(mChopDamage))
-                //{
-                //    mChopTimer = mChopTime;
-                //}
-                //else
-                //{
-                //    mTarget = null;
-
-                //    mArrived = false;
-
-                //    mAgent.SetDestination(GameManager.Instance.GetHome().transform.position);
-                //}
+                switch (mTarget.Type)
+                {
+                    case ResourceType.WOOD:
+                        Trees tmp = mTarget.GetComponent<Trees>();
+                        if (tmp.Interact(mInteractDamage) < 0)
+                        {
+                            mTarget.Collected();
+                            mTarget = null;
+                            mAgent.SetDestination(GameManager.Instance.GetHome().transform.position);
+                        }
+                        break;
+                    case ResourceType.ORE:
+                        break;
+                    case ResourceType.COAL:
+                        break;
+                    case ResourceType.MEAT:
+                        break;
+                    case ResourceType.NONE:
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
 
     // Publi functions
-    public void SetTarget(GameObject target)
+    public void SetTarget(Resource target)
     {
         if (target != null)
         {

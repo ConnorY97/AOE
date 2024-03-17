@@ -11,6 +11,12 @@ public class Trees : Resource
     public override void Tick()
     {
         base.Tick();
-        Debug.Log($"I am a {mType}");
+    }
+
+    public override float Interact(float damage)
+    {
+        mHitPoints -= damage;
+
+        return mHitPoints;
     }
 }

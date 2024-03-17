@@ -5,6 +5,7 @@ using TMPro;
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
 public enum ResourceType
 {
@@ -29,7 +30,7 @@ public class GameManager : MonoBehaviour
     private List<GameObject> mTrees = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
     private Human mCurrentHuman = null;
-    private Trees mCurrentTree = null;
+    //private Trees mCurrentTree = null;
     private NavMeshSurface mGroundSurface = null;
     //private GameObject mChoopedTree = null;
 
@@ -121,25 +122,15 @@ public class GameManager : MonoBehaviour
                 mCurrentSelectedIcon.gameObject.SetActive(true);
                 SetHitPointsUI(mCurrentHuman.GetHitPoints());
             }
-            else if (selectedObject.GetComponent<Trees>() != null)
+            else if (selectedObject.GetComponent<Resource>() != null && mCurrentHuman != null)
             {
-                if (mCurrentTree != null)
-                {
-                    //mCurrentTree.SetSelected(false);
-                    mCurrentTree = null;
-                }
-                mCurrentTree = selectedObject.GetComponent<Trees>();
-                //SetHitPointsUI(mCurrentTree.GetHitPoints());
-                if (mCurrentHuman != null)
-                {
-                    mCurrentHuman.SetTarget(mCurrentTree.gameObject);
-                }
-                //mCurrentTree.SetSelected(true);
+                mCurrentHuman.SetTarget(selectedObject.GetComponent<Resource>());
             }
             else
             {
                 mCurrentHuman = null;
-                mCurrentTree = null;
+                mCurrentSelectedIcon = null;
+                //mCurrentTree = null;
             }
         }
     }
@@ -155,17 +146,11 @@ public class GameManager : MonoBehaviour
 
     public GameObject GetHome() {  return mHome; }
 
-    public void ChoppedTree(GameObject choppedTree)
+    public void ChoppedTree(Resource collectedResource)
     {
-        if (choppedTree != null)
+        if (collectedResource != null)
         {
-            mTrees.Remove(choppedTree);
-
-            Destroy(choppedTree);
-
-            StartCoroutine(RegenerateDelay(3.0f));
-
-            RegenerateNavSurface();
+            mTrees.Remove(collectedResource.gameObject);
         }
     }
     public void SetHitPointsUI(float value)

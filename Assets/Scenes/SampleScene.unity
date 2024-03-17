@@ -519,7 +519,7 @@ PrefabInstance:
       objectReference: {fileID: 1845371753}
     - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
       propertyPath: mMaxTreeSpawn
-      value: 10
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
       propertyPath: mSelectedHitPoints
