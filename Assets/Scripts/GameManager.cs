@@ -18,21 +18,25 @@ public enum ResourceType
 public class GameManager : MonoBehaviour
 {
     // Public Vars
+    // Spawn Values
     public int mMaxTreeSpawn = 100;
     public int mMaxHumanSpawn = 1;
+    // Prefabs
     public GameObject mGround = null;
     public GameObject mTree = null;
     public GameObject mHuman = null;
+    // UI
     public Image mCurrentSelectedIcon = null;
-    public GameObject mHome = null;
     public TMP_Text mSelectedHitPoints = null;
+    public TMP_Text mWoodCountUI = null;
+    // Game objects
+    public GameObject mHome = null;
     // Private Vars
     private List<GameObject> mTrees = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
     private Human mCurrentHuman = null;
-    //private Trees mCurrentTree = null;
     private NavMeshSurface mGroundSurface = null;
-    //private GameObject mChoopedTree = null;
+    private float mWoodCount = 0;
 
     // Singleton Functions
     public static GameManager Instance { get; private set; }
@@ -70,7 +74,7 @@ public class GameManager : MonoBehaviour
 
                     tmp.name = $"Tree{i}";
 
-                    tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f);
+                    tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f, 10.0f);
                     mTrees.Add(tmp);
                 }
                 // --
@@ -152,6 +156,12 @@ public class GameManager : MonoBehaviour
         {
             mTrees.Remove(collectedResource.gameObject);
         }
+    }
+
+    public void IncrementWoodResourceUICount(float amount)
+    {
+        mWoodCount += amount;
+        mWoodCountUI.text = mWoodCount.ToString();
     }
     public void SetHitPointsUI(float value)
     {

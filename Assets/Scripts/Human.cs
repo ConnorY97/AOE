@@ -1,10 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UI;
 
 public class Human : MonoBehaviour
 {
@@ -12,12 +7,16 @@ public class Human : MonoBehaviour
     public Sprite mIcon = null;
     public float mInteractTime = 1.0f;
     public float mInteractDamage = 25.0f;
+    public float mInteractionDistance = 1.5f;
     public float mHitPoints = 100.0f;
     // Private vars
     private NavMeshAgent mAgent = null;
     private Resource mTarget = null;
     private bool mArrived = false;
     private float mInteractTimer = 0.0f;
+    private Transform mHomeTrans = null;
+    private bool mHeadingHome = false;
+    private float mResourceCount = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -30,22 +29,13 @@ public class Human : MonoBehaviour
         }
 
         mInteractTimer = mInteractTime;
+
+        mHomeTrans = GameManager.Instance.GetHome().transform;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!mArrived && mTarget != null)
-        {
-            float dist = Vector3.Distance(transform.position, mTarget.transform.position);
-            //Debug.Log(dist);
-
-            if (dist < 1.5f)
-            {
-                mArrived = true;
-            }
-        }
-
         if (mArrived && mTarget != null)
         {
             mInteractTimer -= Time.deltaTime;
@@ -56,11 +46,14 @@ public class Human : MonoBehaviour
                 {
                     case ResourceType.WOOD:
                         Trees tmp = mTarget.GetComponent<Trees>();
-                        if (tmp.Interact(mInteractDamage) < 0)
+                        if (tmp.Interact(mInteractDamage, out float resources) < 0)
                         {
+                            mResourceCount += resources;
                             mTarget.Collected();
                             mTarget = null;
-                            mAgent.SetDestination(GameManager.Instance.GetHome().transform.position);
+                            mAgent.SetDestination(mHomeTrans.position);
+                            mArrived = false;
+                            mHeadingHome = true;
                         }
                         break;
                     case ResourceType.ORE:
@@ -78,7 +71,7 @@ public class Human : MonoBehaviour
         }
     }
 
-    // Publi functions
+    // Public functions
     public void SetTarget(Resource target)
     {
         if (target != null)
@@ -95,6 +88,19 @@ public class Human : MonoBehaviour
     {
         return mHitPoints;
     }
+
+    public Resource GetTarget() { return mTarget; }
+    public bool GetHeadingHome() {  return mHeadingHome; }
+
+    public float GetResources()
+    {
+        float resourceAmount = mResourceCount;
+        mResourceCount = 0;
+        return resourceAmount;
+    }
+
+    public void SetArrived(bool arrived) { mArrived = arrived; }
+    public void SetHomeArrivedHome(bool arrivedHome) {  mHeadingHome = arrivedHome; }
     // Private functions
     private void OnMouseDown()
     {

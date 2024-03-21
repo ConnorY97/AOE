@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 
-public class Resource : MonoBehaviour
+public abstract class Resource : MonoBehaviour
 {
     protected ResourceType mType = ResourceType.NONE;
     public ResourceType Type
@@ -17,10 +14,17 @@ public class Resource : MonoBehaviour
         get { return mHitPoints; }
     }
 
-    public virtual void Init(ResourceType type, float hitPoints)
+    protected float mReturnResource = 0.0f;
+    public float ReturnResource
+    {
+        get { return mReturnResource; }
+    }
+
+    public virtual void Init(ResourceType type, float hitPoints, float returnAmount)
     {
         mType = type;
         mHitPoints = hitPoints;
+        mReturnResource = returnAmount;
     }
 
     private void Update()
@@ -33,14 +37,7 @@ public class Resource : MonoBehaviour
 
     }
 
-    public virtual void Interact()
-    {
-    }
-
-    public virtual float Interact(float damage)
-    {
-        return 0;
-    }
+    public abstract float Interact(float damage, out float resourceGainAmount);
 
     public virtual void Collected()
     {
@@ -53,5 +50,20 @@ public class Resource : MonoBehaviour
     public virtual void OnMouseDown()
     {
         GameManager.Instance.SetClickedObject(gameObject);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other != null)
+        {
+            Human tmp = other.gameObject.GetComponent<Human>();
+            if (tmp != null)
+            {
+                if (this == tmp.GetTarget())
+                {
+                    tmp.SetArrived(true);
+                }
+            }
+        }
     }
 }
