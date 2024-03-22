@@ -9,6 +9,7 @@ public class Human : MonoBehaviour
     public float mInteractDamage = 25.0f;
     public float mInteractionDistance = 1.5f;
     public float mHitPoints = 100.0f;
+    public LayerMask mRaycastHitTargets;
     // Private vars
     private NavMeshAgent mAgent = null;
     private Resource mTarget = null;
@@ -51,7 +52,20 @@ public class Human : MonoBehaviour
                             mResourceCount += resources;
                             mTarget.Collected();
                             mTarget = null;
-                            mAgent.SetDestination(mHomeTrans.position);
+                            // I will raycast to the house to set the home position so that the human will go to that spot rather than trying to all get to the same spot
+                            Vector3 dir = mHomeTrans.position - transform.position;
+                            Physics.Raycast(transform.position, dir, out RaycastHit hitInfo, float.MaxValue, mRaycastHitTargets);
+                            if (hitInfo.collider.gameObject != null)
+                            {
+                                // Now move towards that point on the home
+                                mAgent.SetDestination(hitInfo.point);
+                            }
+                            else
+                            {
+                                // Just head towards the house if the raycast fails
+                                mAgent.SetDestination(mHomeTrans.position);
+                            }
+                            // Set these since we will always move towards the house
                             mArrived = false;
                             mHeadingHome = true;
                         }

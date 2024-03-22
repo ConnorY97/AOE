@@ -66,6 +66,8 @@ public class GameManager : MonoBehaviour
                 float x = bounds.extents.x;
                 float z = bounds.extents.z; // Get the half size in each direction
 
+                float halfX = x / 2;
+                float halfZ = z / 2;
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
                     float posX = UnityEngine.Random.Range(-x, x);
@@ -91,7 +93,9 @@ public class GameManager : MonoBehaviour
                 // Human spawning
                 for (int i = 0; i < mMaxHumanSpawn; i++)
                 {
-                    GameObject tmp = Instantiate(mHuman, new Vector3(3, 1, 0), transform.rotation);
+                    float posX = UnityEngine.Random.Range(-halfX, halfX);
+                    float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
+                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1, posZ), transform.rotation);
 
                     tmp.name = $"Human{i}";
                     mHumans.Add(tmp);

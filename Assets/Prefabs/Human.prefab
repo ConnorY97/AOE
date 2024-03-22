@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2121, y: 1.2121, z: 1.2121}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -127,6 +127,9 @@ MonoBehaviour:
   mInteractDamage: 25
   mInteractionDistance: 1.5
   mHitPoints: 100
+  mRaycastHitTargets:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!195 &904407224475468565
 NavMeshAgent:
   m_ObjectHideFlags: 0
