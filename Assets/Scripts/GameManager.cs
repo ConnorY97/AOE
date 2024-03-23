@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     // Spawn Values
     public int mMaxTreeSpawn = 100;
     public int mMaxHumanSpawn = 1;
+    public float mSpawnDistance = 3;
     // Prefabs
     public GameObject mGround = null;
     public GameObject mTree = null;
@@ -70,9 +71,24 @@ public class GameManager : MonoBehaviour
                 float halfZ = z / 2;
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
-                    float posX = UnityEngine.Random.Range(-x, x);
-                    float posZ = UnityEngine.Random.Range(-z, z);
-                    GameObject tmp = Instantiate(mTree, new Vector3(posX, 1, posZ), transform.rotation);
+                    // To stop objects spawning on top of each other
+                    //  First we give it a position
+                    Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
+
+                    // Check again all the current existing trees
+                    for (int y = 0; y < mTrees.Count; y++)
+                    {
+                        float dist = Vector3.Distance(newPos, mTrees[y].transform.position);
+                        // While the distance is less than desired
+                        while (dist < mSpawnDistance)
+                        {
+                            // Keep looking for a new position till one is found
+                            newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
+                            dist = Vector3.Distance(newPos, mTrees[y].transform.position);
+                        }
+                    }
+                    // Once a valid position has been found, then it can be set for the instance
+                    GameObject tmp = Instantiate(mTree, newPos, transform.rotation);
 
                     tmp.name = $"Tree{i}";
 

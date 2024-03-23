@@ -709,7 +709,7 @@ PrefabInstance:
       objectReference: {fileID: 1865134865}
     - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
       propertyPath: mMaxTreeSpawn
-      value: 50
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
       propertyPath: mMaxHumanSpawn
