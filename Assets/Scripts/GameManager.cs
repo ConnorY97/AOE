@@ -13,7 +13,7 @@ public enum ResourceType
     ORE,
     COAL,
     MEAT,
-    NONE
+    MAX
 }
 public class GameManager : MonoBehaviour
 {
@@ -29,7 +29,8 @@ public class GameManager : MonoBehaviour
     // UI
     public Image mCurrentSelectedIcon = null;
     public TMP_Text mSelectedHitPoints = null;
-    public TMP_Text mWoodCountUI = null;
+    public List<TMP_Text> mResourceCountUI = new List<TMP_Text>();
+    public Button mSpeedIncrease = null;
     // Game objects
     public GameObject mHome = null;
     // Private Vars
@@ -37,7 +38,7 @@ public class GameManager : MonoBehaviour
     private List<GameObject> mHumans = new List<GameObject>();
     private Human mCurrentHuman = null;
     private NavMeshSurface mGroundSurface = null;
-    private float mWoodCount = 0;
+    private Dictionary<ResourceType, float> mTotalResources = new Dictionary<ResourceType, float>();
 
     // Singleton Functions
     public static GameManager Instance { get; private set; }
@@ -140,6 +141,15 @@ public class GameManager : MonoBehaviour
                 mCurrentSelectedIcon.gameObject.SetActive(false);
             }
         }
+
+        // Set buttons as uninteractable
+        mSpeedIncrease.interactable = false;
+
+        // Set up resource dictionary
+        for (int i = 0; i < (int)ResourceType.MAX; i++)
+        {
+            mTotalResources.Add((ResourceType)i, 0.0f);
+        }
     }
 
     // Update is called once per frame
@@ -147,6 +157,12 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
             RegenerateNavSurface();
+
+        // Check for upgrade availability
+        if (mTotalResources[(int)ResourceType.WOOD] >= 50)
+        {
+            mSpeedIncrease.interactable = true;
+        }
     }
 
 
@@ -195,10 +211,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void IncrementWoodResourceUICount(float amount)
+    //public void IncrementWoodResourceUICount(float amount)
+    //{
+    //    mWoodCount += amount;
+    //    mWoodCountUI.text = mWoodCount.ToString();
+    //}
+
+    public void IncrementResource(Dictionary<ResourceType, float> returnResources)
     {
-        mWoodCount += amount;
-        mWoodCountUI.text = mWoodCount.ToString();
+        // Pass over returned resources
+        for (int i = 0; i < (int)ResourceType.MAX; i++)
+        {
+            mTotalResources[(ResourceType)i] += returnResources[(ResourceType)i];
+
+            // TODO: create UI set stuff
+        }
+
+        mResourceCountUI[0].text = mTotalResources[0].ToString();
+
+        // Check if updgrades are now avialable
     }
     public void SetHitPointsUI(float value)
     {
@@ -208,5 +239,25 @@ public class GameManager : MonoBehaviour
     private IEnumerator RegenerateDelay(float time)
     {
         yield return new WaitForSeconds(time);
+    }
+
+    public void IncreaseSpeedUpgrade()
+    {
+        // Deduct improvement
+        mTotalResources[(int)ResourceType.WOOD] -= 50;
+
+        // Check if it is still available
+        if (mTotalResources[(int)ResourceType.WOOD] < 50)
+        {
+            mSpeedIncrease.interactable = false;
+        }
+
+        // Apply increase
+        for (int i = 0; i < mHumans.Count; i++)
+        {
+            mHumans[i].GetComponent<Human>().Speed *= 1.5f;
+        }
+
+        mResourceCountUI[(int)ResourceType.WOOD].text = mTotalResources[(int)ResourceType.WOOD].ToString();
     }
 }

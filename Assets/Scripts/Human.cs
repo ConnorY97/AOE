@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -51,18 +52,53 @@ public class Human : MonoBehaviour
         get { return mHeadingHome; }
         set { mHeadingHome = value; }
     }
-    private float mResourceCount = 0;
+    //private float mResourceCount = 0;
     private Color mIconColor = Color.white;
     public Color IconColor
     {
         set { mIconColor = value; }
         get { return mIconColor; }
     }
+    private Dictionary<ResourceType, float> mCurrentResources = new Dictionary<ResourceType, float>();
+    public Dictionary<ResourceType, float> CurrentResources
+    {
+        get
+        {
+            // Have to create another dictionary cause Unity dumb
+            Dictionary<ResourceType, float> tmp = new Dictionary<ResourceType, float>();
+            
+            // empty the humans carrying resources when tehy return home.
+            // May have to break this into its own function if I just want to get values without zeroing out
+            for (int i = 0; i < mCurrentResources.Count; i++)
+            {
+                tmp.Add((ResourceType)i, mCurrentResources[(ResourceType)i]);
+                mCurrentResources[(ResourceType)i] = 0;
+            }
+
+            return tmp;
+        }
+    }
+    private float mSpeed = 10.0f;
+    public float Speed
+    {
+        set
+        {
+            mSpeed = value;
+
+            if (mAgent != null)
+            {
+                mAgent.speed = mSpeed;
+            }
+        }
+        get { return mSpeed; }
+    }
 
     // Start is called before the first frame update
     void Start()
     {
         mAgent = GetComponent<NavMeshAgent>();
+
+        mSpeed = mAgent.speed;
 
         if (mAgent == null)
         {
@@ -72,6 +108,12 @@ public class Human : MonoBehaviour
         mInteractTimer = mInteractTime;
 
         mHomeTrans = GameManager.Instance.GetHome().transform;
+
+        // Set up resource dictionary
+        for (int i = 0; i < (int)ResourceType.MAX; i++)
+        {
+            mCurrentResources.Add((ResourceType)i, 0.0f);
+        }
     }
 
     // Update is called once per frame
@@ -89,7 +131,7 @@ public class Human : MonoBehaviour
                         Trees tmp = mTarget.GetComponent<Trees>();
                         if (tmp.Interact(mInteractDamage, out float resources) < 0)
                         {
-                            mResourceCount += resources;
+                            mCurrentResources[ResourceType.WOOD] += resources;
                             mTarget.Collected();
                             mTarget = null;
                             // I will raycast to the house to set the home position so that the human will go to that spot rather than trying to all get to the same spot
@@ -109,6 +151,11 @@ public class Human : MonoBehaviour
                             mArrived = false;
                             mHeadingHome = true;
                         }
+                        else
+                        {
+                            // Need to find a nicer way to handle this.
+                            mCurrentResources[ResourceType.WOOD] += resources;
+                        }
                         break;
                     case ResourceType.ORE:
                         break;
@@ -116,7 +163,7 @@ public class Human : MonoBehaviour
                         break;
                     case ResourceType.MEAT:
                         break;
-                    case ResourceType.NONE:
+                    case ResourceType.MAX:
                         break;
                     default:
                         break;
@@ -127,12 +174,12 @@ public class Human : MonoBehaviour
     }
 
     // Public functions
-    public float GetResources()
-    {
-        float resourceAmount = mResourceCount;
-        mResourceCount = 0;
-        return resourceAmount;
-    }
+    //public Dictionary<ResourceType, float> GetResources()
+    //{
+    //    float resourceAmount = mResourceCount;
+    //    mResourceCount = 0;
+    //    return resourceAmount;
+    //}
     // Private functions
     private void OnMouseDown()
     {

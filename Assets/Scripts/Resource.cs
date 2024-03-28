@@ -2,7 +2,7 @@ using UnityEngine;
 
 public abstract class Resource : MonoBehaviour
 {
-    protected ResourceType mType = ResourceType.NONE;
+    protected ResourceType mType = ResourceType.MAX;
     public ResourceType Type
     {
         get { return mType; }
