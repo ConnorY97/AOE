@@ -44,11 +44,11 @@ public class TownCentre : MonoBehaviour
             Human tmp = other.gameObject.GetComponent<Human>();
             if (tmp != null)
             {
-                if (this == tmp.GetHeadingHome())
+                if (this == tmp.HeadingHome)
                 {
-                    tmp.SetArrived(true);
+                    tmp.Arrived = true;
                     GameManager.Instance.IncrementWoodResourceUICount(tmp.GetResources());
-                    tmp.SetHomeArrivedHome(true);
+                    tmp.Arrived = true;
                 }
             }
         }

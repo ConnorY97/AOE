@@ -59,9 +59,9 @@ public abstract class Resource : MonoBehaviour
             Human tmp = other.gameObject.GetComponent<Human>();
             if (tmp != null)
             {
-                if (this == tmp.GetTarget())
+                if (this == tmp.Target)
                 {
-                    tmp.SetArrived(true);
+                    tmp.Arrived = true;
                 }
             }
         }

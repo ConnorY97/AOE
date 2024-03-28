@@ -3,21 +3,61 @@ using UnityEngine.AI;
 
 public class Human : MonoBehaviour
 {
-    // Public vars
     public Sprite mIcon = null;
     public float mInteractTime = 1.0f;
     public float mInteractDamage = 25.0f;
     public float mInteractionDistance = 1.5f;
-    public float mHitPoints = 100.0f;
+    [SerializeField]
+    private float mHitPoints = 100.0f;
+    public float HitPoints
+    {
+        get { return mHitPoints; }
+        set { mHitPoints = value; }
+    }
     public LayerMask mRaycastHitTargets;
-    // Private vars
     private NavMeshAgent mAgent = null;
+    public NavMeshAgent Agent
+    {
+        get { return mAgent; }
+    }
     private Resource mTarget = null;
+    public Resource Target
+    {
+        set
+        {
+            if (value != null)
+            {
+                mTarget = value;
+
+                mAgent.SetDestination(mTarget.transform.position);
+
+                mArrived = false;
+            }
+        }
+
+        get { return mTarget; }
+    }
     private bool mArrived = false;
+    public bool Arrived
+    {
+        set { mArrived = value; }
+        get { return mArrived; }
+    }
     private float mInteractTimer = 0.0f;
     private Transform mHomeTrans = null;
     private bool mHeadingHome = false;
+    public bool HeadingHome
+    {
+        get { return mHeadingHome; }
+        set { mHeadingHome = value; }
+    }
     private float mResourceCount = 0;
+    private Color mIconColor = Color.white;
+    public Color IconColor
+    {
+        set { mIconColor = value; }
+        get { return mIconColor; }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -81,40 +121,18 @@ public class Human : MonoBehaviour
                     default:
                         break;
                 }
+                mInteractTimer = mInteractTime;
             }
         }
     }
 
     // Public functions
-    public void SetTarget(Resource target)
-    {
-        if (target != null)
-        {
-            mTarget = target;
-
-            mAgent.SetDestination(mTarget.transform.position);
-
-            mArrived = false;
-        }
-    }
-
-    public float GetHitPoints()
-    {
-        return mHitPoints;
-    }
-
-    public Resource GetTarget() { return mTarget; }
-    public bool GetHeadingHome() {  return mHeadingHome; }
-
     public float GetResources()
     {
         float resourceAmount = mResourceCount;
         mResourceCount = 0;
         return resourceAmount;
     }
-
-    public void SetArrived(bool arrived) { mArrived = arrived; }
-    public void SetHomeArrivedHome(bool arrivedHome) {  mHeadingHome = arrivedHome; }
     // Private functions
     private void OnMouseDown()
     {

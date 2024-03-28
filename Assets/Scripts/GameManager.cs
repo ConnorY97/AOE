@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
 
 public enum ResourceType
 {
@@ -67,8 +67,8 @@ public class GameManager : MonoBehaviour
                 float x = bounds.extents.x;
                 float z = bounds.extents.z; // Get the half size in each direction
 
-                float halfX = x / 2;
-                float halfZ = z / 2;
+                float halfX = x / 5;
+                float halfZ = z / 5;
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
                     // To stop objects spawning on top of each other
@@ -111,9 +111,25 @@ public class GameManager : MonoBehaviour
                 {
                     float posX = UnityEngine.Random.Range(-halfX, halfX);
                     float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
-                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1, posZ), transform.rotation);
+                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1.25f, posZ), transform.rotation);
 
                     tmp.name = $"Human{i}";
+
+                    Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
+                    // Set the unique icon colour for each human
+                    Human human = tmp.GetComponent<Human>();
+                    if (human != null)
+                    {
+                        human.IconColor = uniqueColor;
+                    }
+
+                    // Set the material to match the icon color
+                    Material material = tmp.GetComponent<Renderer>().material;
+                    if (material != null)
+                    {
+                        material.color = uniqueColor;
+                    }
+
                     mHumans.Add(tmp);
                 }
                 //--
@@ -143,12 +159,13 @@ public class GameManager : MonoBehaviour
             {
                 mCurrentHuman = selectedObject.GetComponent<Human>();
                 mCurrentSelectedIcon.sprite = icon;
+                mCurrentSelectedIcon.color = mCurrentHuman.IconColor;
                 mCurrentSelectedIcon.gameObject.SetActive(true);
-                SetHitPointsUI(mCurrentHuman.GetHitPoints());
+                //SetHitPointsUI(mCurrentHuman.HitPoints);
             }
             else if (selectedObject.GetComponent<Resource>() != null && mCurrentHuman != null)
             {
-                mCurrentHuman.SetTarget(selectedObject.GetComponent<Resource>());
+                mCurrentHuman.Target = selectedObject.GetComponent<Resource>();
             }
             else
             {
@@ -164,7 +181,7 @@ public class GameManager : MonoBehaviour
         if (mGroundSurface != null)
         {
             mGroundSurface.BuildNavMesh();
-            Debug.Log("Regenerated");
+            //Debug.Log("Regenerated");
         }
     }
 
