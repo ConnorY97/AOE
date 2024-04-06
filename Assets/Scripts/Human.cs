@@ -4,8 +4,8 @@ using UnityEngine.AI;
 
 public class Human : MonoBehaviour
 {
+    // Public vars
     public Sprite mIcon = null;
-    public float mInteractTime = 1.0f;
     public float mInteractDamage = 25.0f;
     public float mInteractionDistance = 1.5f;
     [SerializeField]
@@ -16,6 +16,8 @@ public class Human : MonoBehaviour
         set { mHitPoints = value; }
     }
     public LayerMask mRaycastHitTargets;
+    public ParticleSystem mInteractParticle;
+    //Private vars
     private NavMeshAgent mAgent = null;
     public NavMeshAgent Agent
     {
@@ -66,7 +68,6 @@ public class Human : MonoBehaviour
         get { return mHeadingHome; }
         set { mHeadingHome = value; }
     }
-    //private float mResourceCount = 0;
     private Color mIconColor = Color.white;
     public Color IconColor
     {
@@ -92,6 +93,7 @@ public class Human : MonoBehaviour
             return tmp;
         }
     }
+    [SerializeField]
     private float mSpeed = 10.0f;
     public float Speed
     {
@@ -105,6 +107,13 @@ public class Human : MonoBehaviour
             }
         }
         get { return mSpeed; }
+    }
+    [SerializeField]
+    private float mInteractTime = 1.0f;
+    public float InteractionTime
+    {
+        get { return mInteractTime; }
+        set { mInteractTime = value; }
     }
 
     // Start is called before the first frame update
@@ -157,7 +166,7 @@ public class Human : MonoBehaviour
                         break;
                     case ResourceType.ORE:
                         Ore ore = mTarget.GetComponent<Ore>();
-                        if (ore.Interact(mInteractDamage, out float resource) > 0)
+                        if (ore.Interact(mInteractDamage, out float resource) < 0)
                         {
                             ResourceCollected();
                         }
@@ -173,6 +182,7 @@ public class Human : MonoBehaviour
                         break;
                 }
                 mInteractTimer = mInteractTime;
+                mInteractParticle.Play();
             }
         }
     }

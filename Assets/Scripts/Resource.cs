@@ -43,7 +43,6 @@ public abstract class Resource : MonoBehaviour
     {
         gameObject.SetActive(false);
         GameManager.Instance.RegenerateNavSurface();
-        GameManager.Instance.ChoppedTree(this);
         Destroy(gameObject);
     }
 

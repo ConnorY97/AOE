@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
     public TMP_Text mSelectedHitPoints = null;
     public List<TMP_Text> mResourceCountUI = new List<TMP_Text>();
     public Button mSpeedIncrease = null;
+    public Button mInteractionIncrease = null;
     // Game objects
     public GameObject mHome = null;
     // Private Vars
@@ -186,12 +187,6 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
             RegenerateNavSurface();
-
-        // Check for upgrade availability
-        if (mTotalResources[(int)ResourceType.WOOD] >= 50)
-        {
-            mSpeedIncrease.interactable = true;
-        }
     }
 
     // Public Functions
@@ -230,14 +225,6 @@ public class GameManager : MonoBehaviour
     }
 
     public GameObject GetHome() {  return mHome; }
-
-    public void ChoppedTree(Resource collectedResource)
-    {
-        if (collectedResource != null)
-        {
-            mTrees.Remove(collectedResource.gameObject);
-        }
-    }
     public void IncrementResource(Dictionary<ResourceType, float> returnResources)
     {
         // Pass over returned resources
@@ -254,9 +241,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        //mResourceCountUI[0].text = mTotalResources[0].ToString();
-
-        // Check if updgrades are now avialable
+        CheckUpgradeAvailability();
     }
 
     public void SetHitPointsUI(float value)
@@ -265,29 +250,55 @@ public class GameManager : MonoBehaviour
     }
 
     // Private Functions
-    private IEnumerator RegenerateDelay(float time)
-    {
-        yield return new WaitForSeconds(time);
-    }
-
     public void IncreaseSpeedUpgrade()
     {
-        // Deduct improvement
-        mTotalResources[(int)ResourceType.WOOD] -= 50;
+        ApplyUpdgrade(ResourceType.WOOD);
+    }
 
-        // Check if it is still available
-        if (mTotalResources[(int)ResourceType.WOOD] < 50)
-        {
-            mSpeedIncrease.interactable = false;
-        }
+    public void IncreaseInteractionUpgrade()
+    {
+        ApplyUpdgrade(ResourceType.ORE);
+    }
+
+    private void ApplyUpdgrade(ResourceType type)
+    {
+        // Deduct improvement
+        mTotalResources[type] -= 50;
 
         // Apply increase
         for (int i = 0; i < mHumans.Count; i++)
         {
-            mHumans[i].GetComponent<Human>().Speed *= 1.5f;
+            switch (type)
+            {
+                case ResourceType.WOOD:
+                    mHumans[i].GetComponent<Human>().Speed *= 1.5f;
+                    // Check if it is still available
+                    if (mTotalResources[type] < 50)
+                    {
+                        mSpeedIncrease.interactable = false;
+                    }
+                    break;
+                case ResourceType.ORE:
+                    mHumans[i].GetComponent<Human>().InteractionTime -= 0.05f;
+                    // Check if it is still available
+                    if (mTotalResources[type] < 50)
+                    {
+                        mInteractionIncrease.interactable = false;
+                    }
+                    break;
+                case ResourceType.COAL:
+                    break;
+                case ResourceType.MEAT:
+                    break;
+                case ResourceType.MAX:
+                    break;
+                default:
+                    break;
+            }
+            
         }
 
-        mResourceCountUI[(int)ResourceType.WOOD].text = mTotalResources[(int)ResourceType.WOOD].ToString();
+        mResourceCountUI[(int)type].text = mTotalResources[type].ToString();
     }
 
     private Vector3 GetFreePosition(Bounds spawnBounds)
@@ -313,5 +324,18 @@ public class GameManager : MonoBehaviour
         mResourcePositions.Add(newPos);
         // Once a valid position has been found, then it can be set for the instance
         return newPos;
+    }
+
+    private void CheckUpgradeAvailability()
+    {
+        // Check for upgrade availability
+        if (mTotalResources[ResourceType.WOOD] >= 50)
+        {
+            mSpeedIncrease.interactable = true;
+        }
+        if (mTotalResources[ResourceType.ORE] >= 50)
+        {
+            mInteractionIncrease.interactable = true;
+        }
     }
 }
