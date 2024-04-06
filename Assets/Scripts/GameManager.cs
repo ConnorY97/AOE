@@ -62,7 +62,7 @@ public class GameManager : MonoBehaviour
             MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
             if (groundMesh != null)
             {
-                // Tree spawning
+                // Getting the spawning bounds
                 Bounds bounds = groundMesh.bounds;
 
                 float x = bounds.extents.x;
@@ -70,6 +70,54 @@ public class GameManager : MonoBehaviour
 
                 float halfX = x / 5;
                 float halfZ = z / 5;
+                //---
+                // Create the nav mesh surface before the human,
+                //  Otherwise it gets mad there is not surface
+                mGroundSurface = mGround.GetComponent<NavMeshSurface>();
+
+                if (mGroundSurface != null)
+                {
+                    mGroundSurface.BuildNavMesh();
+                }
+                else
+                {
+                    Debug.Log("Failed to create navmesh surface");
+                }
+                //--
+                // Human spawning
+                for (int i = 0; i < mMaxHumanSpawn; i++)
+                {
+                    float posX = UnityEngine.Random.Range(-halfX, halfX);
+                    float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
+                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1.25f, posZ), transform.rotation);
+
+                    tmp.name = $"Human{i}";
+
+                    Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
+                    // Set the unique icon colour for each human
+                    Human human = tmp.GetComponent<Human>();
+                    if (human != null)
+                    {
+                        human.IconColor = uniqueColor;
+                    }
+
+                    // Zero out the vel to try and stop the weird movement after spawning
+                    if (human.Rigidbody != null)
+                    {
+                        human.Rigidbody.velocity = Vector3.zero;
+                    }
+
+                    // Set the material to match the icon color
+                    Material material = tmp.GetComponent<Renderer>().material;
+                    if (material != null)
+                    {
+                        material.color = uniqueColor;
+                    }
+
+                    mHumans.Add(tmp);
+                }
+                //--
+                // Tree spawning
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
                     // To stop objects spawning on top of each other
@@ -97,43 +145,6 @@ public class GameManager : MonoBehaviour
                     mTrees.Add(tmp);
                 }
                 // --
-
-                // Create the nav mesh surface before the human,
-                //  Otherwise it gets mad there is not surface
-                mGroundSurface = mGround.GetComponent<NavMeshSurface>();
-
-                if (mGroundSurface != null)
-                {
-                    mGroundSurface.BuildNavMesh();
-                }
-                //--
-                // Human spawning
-                for (int i = 0; i < mMaxHumanSpawn; i++)
-                {
-                    float posX = UnityEngine.Random.Range(-halfX, halfX);
-                    float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
-                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1.25f, posZ), transform.rotation);
-
-                    tmp.name = $"Human{i}";
-
-                    Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
-                    // Set the unique icon colour for each human
-                    Human human = tmp.GetComponent<Human>();
-                    if (human != null)
-                    {
-                        human.IconColor = uniqueColor;
-                    }
-
-                    // Set the material to match the icon color
-                    Material material = tmp.GetComponent<Renderer>().material;
-                    if (material != null)
-                    {
-                        material.color = uniqueColor;
-                    }
-
-                    mHumans.Add(tmp);
-                }
-                //--
             }
 
             if (mCurrentSelectedIcon != null)

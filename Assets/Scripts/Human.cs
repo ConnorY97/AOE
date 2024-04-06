@@ -39,9 +39,23 @@ public class Human : MonoBehaviour
         get { return mTarget; }
     }
     private bool mArrived = false;
+    private Rigidbody mRigidbody = null;
+    public Rigidbody Rigidbody
+    {
+        get { return mRigidbody; }
+    }
     public bool Arrived
     {
-        set { mArrived = value; }
+        set
+        {
+            if (value)
+            {
+                // Going to try stop the Humans bouncing when near their targets and to try improve movement.
+                mAgent.destination = transform.position;
+                mRigidbody.velocity = Vector3.zero;
+            }
+            mArrived = value;
+        }
         get { return mArrived; }
     }
     private float mInteractTimer = 0.0f;
@@ -113,6 +127,12 @@ public class Human : MonoBehaviour
         for (int i = 0; i < (int)ResourceType.MAX; i++)
         {
             mCurrentResources.Add((ResourceType)i, 0.0f);
+        }
+
+        mRigidbody = GetComponent<Rigidbody>();
+        if (mRigidbody == null)
+        {
+            Debug.Log($"Missing RB on {gameObject.name}");
         }
     }
 
