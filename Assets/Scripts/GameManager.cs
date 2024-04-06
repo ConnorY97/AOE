@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.AI.Navigation;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
@@ -15,17 +16,20 @@ public enum ResourceType
     MEAT,
     MAX
 }
+
 public class GameManager : MonoBehaviour
 {
     // Public Vars
     // Spawn Values
-    public int mMaxTreeSpawn = 100;
     public int mMaxHumanSpawn = 1;
+    public int mMaxTreeSpawn = 100;
+    public int mMaxOreSpawn = 50;
     public float mSpawnDistance = 3;
     // Prefabs
     public GameObject mGround = null;
     public GameObject mTree = null;
     public GameObject mHuman = null;
+    public GameObject mOre = null;
     // UI
     public Image mCurrentSelectedIcon = null;
     public TMP_Text mSelectedHitPoints = null;
@@ -36,9 +40,11 @@ public class GameManager : MonoBehaviour
     // Private Vars
     private List<GameObject> mTrees = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
+    private List<GameObject> mOres = new List<GameObject>();
     private Human mCurrentHuman = null;
     private NavMeshSurface mGroundSurface = null;
     private Dictionary<ResourceType, float> mTotalResources = new Dictionary<ResourceType, float>();
+    private List<Vector3> mResourcePositions = new List<Vector3>();
 
     // Singleton Functions
     public static GameManager Instance { get; private set; }
@@ -57,6 +63,8 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Add the town to the invalid positions
+        mResourcePositions.Add(mHome.transform.position);
         if (mGround != null)
         {
             MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
@@ -89,7 +97,12 @@ public class GameManager : MonoBehaviour
                 {
                     float posX = UnityEngine.Random.Range(-halfX, halfX);
                     float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
-                    GameObject tmp = Instantiate(mHuman, new Vector3(posX, 1.25f, posZ), transform.rotation);
+                    Vector3 newPos = new Vector3(posX, 1.25f, posZ);
+                    GameObject tmp = Instantiate(mHuman, newPos, transform.rotation);
+
+
+                    // Add the humans to the invalid positions
+                    mResourcePositions.Add(newPos);
 
                     tmp.name = $"Human{i}";
 
@@ -120,31 +133,36 @@ public class GameManager : MonoBehaviour
                 // Tree spawning
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
-                    // To stop objects spawning on top of each other
-                    //  First we give it a position
-                    Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
-
-                    // Check again all the current existing trees
-                    for (int y = 0; y < mTrees.Count; y++)
-                    {
-                        float dist = Vector3.Distance(newPos, mTrees[y].transform.position);
-                        // While the distance is less than desired
-                        while (dist < mSpawnDistance)
-                        {
-                            // Keep looking for a new position till one is found
-                            newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
-                            dist = Vector3.Distance(newPos, mTrees[y].transform.position);
-                        }
-                    }
-                    // Once a valid position has been found, then it can be set for the instance
-                    GameObject tmp = Instantiate(mTree, newPos, transform.rotation);
+                    GameObject tmp = Instantiate(mTree, GetFreePosition(bounds), transform.rotation);
 
                     tmp.name = $"Tree{i}";
 
                     tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f, 10.0f);
+
                     mTrees.Add(tmp);
                 }
                 // --
+                // Ore spawning
+                for (int i = 0; i < mMaxOreSpawn; i++)
+                {
+                    GameObject tmp = Instantiate(mOre, GetFreePosition(bounds), transform.rotation);
+
+                    tmp.name = $"Ore{i}";
+
+                    tmp.GetComponent<Ore>().Init(ResourceType.ORE, 100.0f, 10.0f);
+
+                    mOres.Add(tmp);
+                }
+
+                // Regenerate the navmesh now all resources have spawned
+                if (mGroundSurface != null)
+                {
+                    mGroundSurface.BuildNavMesh();
+                }
+                else
+                {
+                    Debug.Log("Failed to create navmesh surface");
+                }
             }
 
             if (mCurrentSelectedIcon != null)
@@ -175,7 +193,6 @@ public class GameManager : MonoBehaviour
             mSpeedIncrease.interactable = true;
         }
     }
-
 
     // Public Functions
     public void SetClickedObject(GameObject selectedObject, Sprite icon = null)
@@ -221,13 +238,6 @@ public class GameManager : MonoBehaviour
             mTrees.Remove(collectedResource.gameObject);
         }
     }
-
-    //public void IncrementWoodResourceUICount(float amount)
-    //{
-    //    mWoodCount += amount;
-    //    mWoodCountUI.text = mWoodCount.ToString();
-    //}
-
     public void IncrementResource(Dictionary<ResourceType, float> returnResources)
     {
         // Pass over returned resources
@@ -235,17 +245,25 @@ public class GameManager : MonoBehaviour
         {
             mTotalResources[(ResourceType)i] += returnResources[(ResourceType)i];
 
-            // TODO: create UI set stuff
+
+            // Get rid of this once I have all the UI set up
+            // Bandaid to stop out of bounds error
+            if (i < mResourceCountUI.Count)
+            {
+                mResourceCountUI[i].text = mTotalResources[(ResourceType)i].ToString();
+            }
         }
 
-        mResourceCountUI[0].text = mTotalResources[0].ToString();
+        //mResourceCountUI[0].text = mTotalResources[0].ToString();
 
         // Check if updgrades are now avialable
     }
+
     public void SetHitPointsUI(float value)
     {
         mSelectedHitPoints.text = $"Current hitpoints: {value}";
     }
+
     // Private Functions
     private IEnumerator RegenerateDelay(float time)
     {
@@ -270,5 +288,30 @@ public class GameManager : MonoBehaviour
         }
 
         mResourceCountUI[(int)ResourceType.WOOD].text = mTotalResources[(int)ResourceType.WOOD].ToString();
+    }
+
+    private Vector3 GetFreePosition(Bounds spawnBounds)
+    {
+        float x = spawnBounds.extents.x;
+        float z = spawnBounds.extents.z;
+        // To stop resources spawning on top of each other
+        //  First we give it a position
+        Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
+
+        // Check again all the current existing resource positions
+        for (int y = 0; y < mResourcePositions.Count; y++)
+        {
+            float dist = Vector3.Distance(newPos, mResourcePositions[y]);
+            // While the distance is less than desired
+            while (dist < mSpawnDistance)
+            {
+                // Keep looking for a new position till one is found
+                newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
+                dist = Vector3.Distance(newPos, mResourcePositions[y]);
+            }
+        }
+        mResourcePositions.Add(newPos);
+        // Once a valid position has been found, then it can be set for the instance
+        return newPos;
     }
 }

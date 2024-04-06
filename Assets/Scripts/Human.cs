@@ -148,36 +148,20 @@ public class Human : MonoBehaviour
                 switch (mTarget.Type)
                 {
                     case ResourceType.WOOD:
-                        Trees tmp = mTarget.GetComponent<Trees>();
-                        if (tmp.Interact(mInteractDamage, out float resources) < 0)
+                        Trees tree = mTarget.GetComponent<Trees>();
+                        if (tree.Interact(mInteractDamage, out float resources) < 0)
                         {
-                            mCurrentResources[ResourceType.WOOD] += resources;
-                            mTarget.Collected();
-                            mTarget = null;
-                            // I will raycast to the house to set the home position so that the human will go to that spot rather than trying to all get to the same spot
-                            Vector3 dir = mHomeTrans.position - transform.position;
-                            Physics.Raycast(transform.position, dir, out RaycastHit hitInfo, float.MaxValue, mRaycastHitTargets);
-                            if (hitInfo.collider.gameObject != null)
-                            {
-                                // Now move towards that point on the home
-                                mAgent.SetDestination(hitInfo.point);
-                            }
-                            else
-                            {
-                                // Just head towards the house if the raycast fails
-                                mAgent.SetDestination(mHomeTrans.position);
-                            }
-                            // Set these since we will always move towards the house
-                            mArrived = false;
-                            mHeadingHome = true;
+                            ResourceCollected();
                         }
-                        else
-                        {
-                            // Need to find a nicer way to handle this.
-                            mCurrentResources[ResourceType.WOOD] += resources;
-                        }
+                        mCurrentResources[ResourceType.WOOD] += resources;
                         break;
                     case ResourceType.ORE:
+                        Ore ore = mTarget.GetComponent<Ore>();
+                        if (ore.Interact(mInteractDamage, out float resource) > 0)
+                        {
+                            ResourceCollected();
+                        }
+                        mCurrentResources[ResourceType.ORE] += resource;
                         break;
                     case ResourceType.COAL:
                         break;
@@ -194,15 +178,33 @@ public class Human : MonoBehaviour
     }
 
     // Public functions
-    //public Dictionary<ResourceType, float> GetResources()
-    //{
-    //    float resourceAmount = mResourceCount;
-    //    mResourceCount = 0;
-    //    return resourceAmount;
-    //}
+
     // Private functions
     private void OnMouseDown()
     {
         GameManager.Instance.SetClickedObject(gameObject, mIcon);
+    }
+
+    // Boiler plater code
+    private void ResourceCollected()
+    {
+        mTarget.Collected();
+        mTarget = null;
+        // I will raycast to the house to set the home position so that the human will go to that spot rather than trying to all get to the same spot
+        Vector3 dir = mHomeTrans.position - transform.position;
+        Physics.Raycast(transform.position, dir, out RaycastHit hitInfo, float.MaxValue, mRaycastHitTargets);
+        if (hitInfo.collider.gameObject != null)
+        {
+            // Now move towards that point on the home
+            mAgent.SetDestination(hitInfo.point);
+        }
+        else
+        {
+            // Just head towards the house if the raycast fails
+            mAgent.SetDestination(mHomeTrans.position);
+        }
+        // Set these since we will always move towards the house
+        mArrived = false;
+        mHeadingHome = true;
     }
 }

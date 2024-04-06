@@ -44,5 +44,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cfccc24867a06a488bfbec53d33432f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mMaxTreeSpawn: 10
+  mMaxTreeSpawn: 100
+  mMaxHumanSpawn: 2
+  mSpawnDistance: 3
+  mMaxOreSpawn: 50
   mGround: {fileID: 0}
+  mTree: {fileID: 8107078994033610015, guid: 2173428ca1c6e504e920767cf0a94c4d, type: 3}
+  mHuman: {fileID: 638199269577307898, guid: 7c911960a22aa94439f3b626ce390ebc, type: 3}
+  mOre: {fileID: 1874949011906607371, guid: eea1a5056856ac545aa6dd50967faf9b, type: 3}
+  mCurrentSelectedIcon: {fileID: 0}
+  mSelectedHitPoints: {fileID: 0}
+  mResourceCountUI:
+  - {fileID: 0}
+  mSpeedIncrease: {fileID: 0}
+  mHome: {fileID: 0}
