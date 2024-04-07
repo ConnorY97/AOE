@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     public GameObject mTree = null;
     public GameObject mHuman = null;
     public GameObject mOre = null;
+    public GameObject mSpawnCheckObject = null;
     // UI
     public Image mCurrentSelectedIcon = null;
     public TMP_Text mSelectedHitPoints = null;
@@ -39,14 +40,12 @@ public class GameManager : MonoBehaviour
     // Game objects
     public GameObject mHome = null;
     // Private Vars
-    private List<GameObject> mTrees = new List<GameObject>();
+    private List<GameObject> mObjects = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
-    private List<GameObject> mOres = new List<GameObject>();
     private Human mCurrentHuman = null;
     private NavMeshSurface mGroundSurface = null;
     private Dictionary<ResourceType, float> mTotalResources = new Dictionary<ResourceType, float>();
     private List<Vector3> mResourcePositions = new List<Vector3>();
-
     // Singleton Functions
     public static GameManager Instance { get; private set; }
 
@@ -134,25 +133,25 @@ public class GameManager : MonoBehaviour
                 // Tree spawning
                 for (int i = 0; i < mMaxTreeSpawn; i++)
                 {
-                    GameObject tmp = Instantiate(mTree, GetFreePosition(bounds), transform.rotation);
+                    GameObject tmp = Instantiate(mTree, new Vector3(100.0f, 100.0f, 100.0f), transform.rotation);
 
                     tmp.name = $"Tree{i}";
 
                     tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f, 10.0f);
 
-                    mTrees.Add(tmp);
+                    mObjects.Add(tmp);
                 }
                 // --
                 // Ore spawning
                 for (int i = 0; i < mMaxOreSpawn; i++)
                 {
-                    GameObject tmp = Instantiate(mOre, GetFreePosition(bounds), transform.rotation);
+                    GameObject tmp = Instantiate(mOre, new Vector3(100.0f, 100.0f, 100.0f), transform.rotation);
 
                     tmp.name = $"Ore{i}";
 
                     tmp.GetComponent<Ore>().Init(ResourceType.ORE, 100.0f, 10.0f);
 
-                    mOres.Add(tmp);
+                    mObjects.Add(tmp);
                 }
 
                 // Regenerate the navmesh now all resources have spawned
@@ -180,13 +179,13 @@ public class GameManager : MonoBehaviour
         {
             mTotalResources.Add((ResourceType)i, 0.0f);
         }
+
+        // Now move all the objects onto the map and make sure they are not overlapping
+        StartCoroutine(PlaceObjects());
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-            RegenerateNavSurface();
     }
 
     // Public Functions
@@ -295,34 +294,32 @@ public class GameManager : MonoBehaviour
                 default:
                     break;
             }
-            
         }
 
         mResourceCountUI[(int)type].text = mTotalResources[type].ToString();
     }
 
-    private Vector3 GetFreePosition(Bounds spawnBounds)
+    private Vector3 GetFreePosition(Bounds spawnBounds, float yHeight)
     {
         float x = spawnBounds.extents.x;
         float z = spawnBounds.extents.z;
         // To stop resources spawning on top of each other
         //  First we give it a position
-        Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
+        Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), yHeight, UnityEngine.Random.Range(-z, z));
 
-        // Check again all the current existing resource positions
-        for (int y = 0; y < mResourcePositions.Count; y++)
+        // Trying a new method for spawning objects.
+        // Rather than going through a list of position, I will shpere cast at the spawn location a check if there is anything other than the ground there.
+        var checkResult = Physics.OverlapSphere(newPos, mSpawnDistance);
+
+        // Recusrsion keep checkign till we find a free stop.
+        // Hopefully this will help with the debugging.
+        if (checkResult.Length > 1)
         {
-            float dist = Vector3.Distance(newPos, mResourcePositions[y]);
-            // While the distance is less than desired
-            while (dist < mSpawnDistance)
-            {
-                // Keep looking for a new position till one is found
-                newPos = new Vector3(UnityEngine.Random.Range(-x, x), 1, UnityEngine.Random.Range(-z, z));
-                dist = Vector3.Distance(newPos, mResourcePositions[y]);
-            }
+            newPos = GetFreePosition(spawnBounds, yHeight);
         }
-        mResourcePositions.Add(newPos);
-        // Once a valid position has been found, then it can be set for the instance
+
+        Debug.Log(checkResult.Length.ToString());
+        // Assign the free position
         return newPos;
     }
 
@@ -337,5 +334,23 @@ public class GameManager : MonoBehaviour
         {
             mInteractionIncrease.interactable = true;
         }
+    }
+
+    IEnumerator PlaceObjects()
+    {
+        //Print the time of when the function is first called.
+        Debug.Log("Started Coroutine at timestamp : " + Time.time);
+
+        //yield on a new YieldInstruction that waits for 5 seconds.
+
+        for (int i = 0; i < mObjects.Count; i++)
+        {
+            MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
+            Bounds bounds = groundMesh.bounds;
+            mObjects[i].transform.position = GetFreePosition(bounds, 0.0f);
+            yield return new WaitForSeconds(0.125f);
+        }
+        //After we have waited 5 seconds print the time again.
+        Debug.Log("Finished Coroutine at timestamp : " + Time.time);
     }
 }

@@ -81,7 +81,7 @@ public class Human : MonoBehaviour
         {
             // Have to create another dictionary cause Unity dumb
             Dictionary<ResourceType, float> tmp = new Dictionary<ResourceType, float>();
-            
+
             // empty the humans carrying resources when tehy return home.
             // May have to break this into its own function if I just want to get values without zeroing out
             for (int i = 0; i < mCurrentResources.Count; i++)
