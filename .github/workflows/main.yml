@@ -53,3 +53,12 @@ jobs:
 
       - name: Test Artifact Upload
         run: ls -R
+
+      - name: Uploading to itch.io
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+          CHANNEL: windows
+          ITCH_GAME: AOE
+          ITCH_USER: ConnorY97
+          PACKAGE: /home/runner/work/AOE/WebGL/WebGL
