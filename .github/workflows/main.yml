@@ -31,8 +31,9 @@ jobs:
           path: ./Library
           key: Library-${{matrix.projectName}}-${{matrix.targetPlatform}}
           restore-keys: |
-            Library-${{matrix.projectName}}-
             Library-
+            Library-${{matrix.projectName}}-
+            Library-${{matrix.projectName}}-${{matrix.targetPlatform}}
 
       - name: Unity Builder
         uses: game-ci/unity-builder@v4
