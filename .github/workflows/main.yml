@@ -33,6 +33,7 @@ jobs:
           restore-keys: |
             Library-
             Library-${{matrix.projectName}}-
+            Library-${{matrix.projectName}}-${{matrix.targetPlatform}}
 
       - name: Unity Builder
         uses: game-ci/unity-builder@v4
