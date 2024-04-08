@@ -28,7 +28,7 @@ jobs:
       - name: Caching
         uses: actions/cache@v3
         with:
-          path: ./${{matrix.projectName}}/Library
+          path: ./Library
           key: Library-${{matrix.projectName}}-${{matrix.targetPlatform}}
           restore-keys: |
             Library-${{matrix.projectName}}-
