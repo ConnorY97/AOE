@@ -100,9 +100,8 @@ public class GameManager : MonoBehaviour
                     Vector3 newPos = new Vector3(posX, 1.25f, posZ);
                     GameObject tmp = Instantiate(mHuman, newPos, transform.rotation);
 
-
                     // Add the humans to the invalid positions
-                    mResourcePositions.Add(newPos);
+                    //mResourcePositions.Add(newPos);
 
                     tmp.name = $"Human{i}";
 
@@ -129,6 +128,9 @@ public class GameManager : MonoBehaviour
 
                     mHumans.Add(tmp);
                 }
+
+                // Spawn the humans
+                StartCoroutine(PlaceObjects(mHumans, 0.5f));
                 //--
                 // Tree spawning
                 for (int i = 0; i < mMaxTreeSpawn; i++)
@@ -153,16 +155,6 @@ public class GameManager : MonoBehaviour
 
                     mObjects.Add(tmp);
                 }
-
-                // Regenerate the navmesh now all resources have spawned
-                if (mGroundSurface != null)
-                {
-                    mGroundSurface.BuildNavMesh();
-                }
-                else
-                {
-                    Debug.Log("Failed to create navmesh surface");
-                }
             }
 
             if (mCurrentSelectedIcon != null)
@@ -181,13 +173,13 @@ public class GameManager : MonoBehaviour
         }
 
         // Now move all the objects onto the map and make sure they are not overlapping
-        StartCoroutine(PlaceObjects());
+        StartCoroutine(PlaceObjects(mObjects, 0.0f));
     }
 
     private void Update()
     {
-    }
 
+    }
     // Public Functions
     public void SetClickedObject(GameObject selectedObject, Sprite icon = null)
     {
@@ -318,7 +310,6 @@ public class GameManager : MonoBehaviour
             newPos = GetFreePosition(spawnBounds, yHeight);
         }
 
-        Debug.Log(checkResult.Length.ToString());
         // Assign the free position
         return newPos;
     }
@@ -336,21 +327,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    IEnumerator PlaceObjects()
+    IEnumerator PlaceObjects(List<GameObject> objectsToPlace, float yHeight)
     {
-        //Print the time of when the function is first called.
-        Debug.Log("Started Coroutine at timestamp : " + Time.time);
-
         //yield on a new YieldInstruction that waits for 5 seconds.
 
-        for (int i = 0; i < mObjects.Count; i++)
+        for (int i = 0; i < objectsToPlace.Count; i++)
         {
             MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
             Bounds bounds = groundMesh.bounds;
-            mObjects[i].transform.position = GetFreePosition(bounds, 0.0f);
-            yield return new WaitForSeconds(0.125f);
+            objectsToPlace[i].transform.position = GetFreePosition(bounds, yHeight);
+            mGroundSurface.BuildNavMesh();
+            yield return new WaitForSeconds(0.01f);
         }
-        //After we have waited 5 seconds print the time again.
-        Debug.Log("Finished Coroutine at timestamp : " + Time.time);
     }
 }

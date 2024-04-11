@@ -116,8 +116,7 @@ public class Human : MonoBehaviour
         set { mInteractTime = value; }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         mAgent = GetComponent<NavMeshAgent>();
 
@@ -128,6 +127,11 @@ public class Human : MonoBehaviour
             Debug.Log($"Missing agent on {name}");
         }
 
+        mAgent.enabled = false;
+    }
+    // Start is called before the first frame update
+    void Start()
+    {
         mInteractTimer = mInteractTime;
 
         mHomeTrans = GameManager.Instance.GetHome().transform;
@@ -193,6 +197,9 @@ public class Human : MonoBehaviour
     private void OnMouseDown()
     {
         GameManager.Instance.SetClickedObject(gameObject, mIcon);
+
+        if (mAgent.enabled == false)
+            mAgent.enabled = true;
     }
 
     // Boiler plater code
