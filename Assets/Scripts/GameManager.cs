@@ -238,20 +238,6 @@ public class GameManager : MonoBehaviour
         {
             // Deduct the cost of the upgrade
             mTotalResources[types[0]] -= deductionAmount;
-
-            // This can be improved
-            // Check if speed is still available
-            if (mTotalResources[types[0]] < deductionAmount)
-            {
-                mSpeedIncrease.interactable = false;
-            }
-
-            // Check if interaction is still available
-            if (mTotalResources[types[0]] < deductionAmount)
-            {
-                mInteractionIncrease.interactable = false;
-            }
-
             // Apply increase
             for (int y = 0; y < mHumans.Count; y++)
             {
@@ -282,14 +268,22 @@ public class GameManager : MonoBehaviour
             for (int i = 0; i < types.Count; i++)
             {
                 mTotalResources[types[i]] -= deductionAmount;
+                mResourceCountUI[(int)types[i]].text = mTotalResources[types[i]].ToString();
             }
 
             // Will have to improve how this works
             if (types[0] == ResourceType.WOOD && types[1] == ResourceType.ORE)
             {
                 SpawnHuman(GetFreePosition(0.0f), mHumans.Count);
+
+                if (mTotalResources[ResourceType.WOOD] <= 100 && mTotalResources[ResourceType.ORE] <= 100)
+                {
+                    mSpawnHuman.interactable = false;
+                }
             }
         }
+
+        CheckUpgradeAvailability();
     }
 
     private Vector3 GetFreePosition(float yHeight)
@@ -322,13 +316,27 @@ public class GameManager : MonoBehaviour
         {
             mSpeedIncrease.interactable = true;
         }
+        else
+        {
+            mSpeedIncrease.interactable = false;
+        }
+
         if (mTotalResources[ResourceType.ORE] >= 50)
         {
             mInteractionIncrease.interactable = true;
         }
-        if (mTotalResources[ResourceType.WOOD] >= 100 && mTotalResources[ResourceType.ORE] >= 50)
+        else
+        {
+            mInteractionIncrease.interactable = false;
+        }
+
+        if (mTotalResources[ResourceType.WOOD] >= 100 && mTotalResources[ResourceType.ORE] >= 100)
         {
             mSpawnHuman.interactable = true;
+        }
+        else
+        {
+            mSpawnHuman.interactable = false;
         }
     }
 
