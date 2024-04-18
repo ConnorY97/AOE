@@ -30,13 +30,14 @@ public class GameManager : MonoBehaviour
     public GameObject mTree = null;
     public GameObject mHuman = null;
     public GameObject mOre = null;
-    public GameObject mSpawnCheckObject = null;
     // UI
     public Image mCurrentSelectedIcon = null;
     public TMP_Text mSelectedHitPoints = null;
     public List<TMP_Text> mResourceCountUI = new List<TMP_Text>();
+    // Improvements
     public Button mSpeedIncrease = null;
     public Button mInteractionIncrease = null;
+    public Button mSpawnHuman = null;
     // Game objects
     public GameObject mHome = null;
     // Private Vars
@@ -46,6 +47,8 @@ public class GameManager : MonoBehaviour
     private NavMeshSurface mGroundSurface = null;
     private Dictionary<ResourceType, float> mTotalResources = new Dictionary<ResourceType, float>();
     private List<Vector3> mResourcePositions = new List<Vector3>();
+    private MeshCollider mGroundMesh = null;
+    private Bounds mBounds = new Bounds();
     // Singleton Functions
     public static GameManager Instance { get; private set; }
 
@@ -67,14 +70,14 @@ public class GameManager : MonoBehaviour
         mResourcePositions.Add(mHome.transform.position);
         if (mGround != null)
         {
-            MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
-            if (groundMesh != null)
+            mGroundMesh = mGround.GetComponent<MeshCollider>();
+            if (mGroundMesh != null)
             {
                 // Getting the spawning bounds
-                Bounds bounds = groundMesh.bounds;
+                mBounds = mGroundMesh.bounds;
 
-                float x = bounds.extents.x;
-                float z = bounds.extents.z; // Get the half size in each direction
+                float x = mBounds.extents.x;
+                float z = mBounds.extents.z; // Get the half size in each direction
 
                 float halfX = x / 5;
                 float halfZ = z / 5;
@@ -98,35 +101,7 @@ public class GameManager : MonoBehaviour
                     float posX = UnityEngine.Random.Range(-halfX, halfX);
                     float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
                     Vector3 newPos = new Vector3(posX, 1.25f, posZ);
-                    GameObject tmp = Instantiate(mHuman, newPos, transform.rotation);
-
-                    // Add the humans to the invalid positions
-                    //mResourcePositions.Add(newPos);
-
-                    tmp.name = $"Human{i}";
-
-                    Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
-                    // Set the unique icon colour for each human
-                    Human human = tmp.GetComponent<Human>();
-                    if (human != null)
-                    {
-                        human.IconColor = uniqueColor;
-                    }
-
-                    // Zero out the vel to try and stop the weird movement after spawning
-                    if (human.Rigidbody != null)
-                    {
-                        human.Rigidbody.velocity = Vector3.zero;
-                    }
-
-                    // Set the material to match the icon color
-                    Material material = tmp.GetComponent<Renderer>().material;
-                    if (material != null)
-                    {
-                        material.color = uniqueColor;
-                    }
-
-                    mHumans.Add(tmp);
+                    SpawnHuman(newPos, i);
                 }
 
                 // Spawn the humans
@@ -173,7 +148,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Now move all the objects onto the map and make sure they are not overlapping
-        StartCoroutine(PlaceObjects(mObjects, 0.0f));
+        StartCoroutine(PlaceObjects(mObjects, 0.5f));
     }
 
     private void Update()
@@ -243,58 +218,84 @@ public class GameManager : MonoBehaviour
     // Private Functions
     public void IncreaseSpeedUpgrade()
     {
-        ApplyUpdgrade(ResourceType.WOOD);
+        ApplyUpdgrade(new List<ResourceType> { ResourceType.WOOD }, 50.0f);
     }
 
     public void IncreaseInteractionUpgrade()
     {
-        ApplyUpdgrade(ResourceType.ORE);
+        ApplyUpdgrade(new List<ResourceType> { ResourceType.ORE }, 50.0f);
     }
 
-    private void ApplyUpdgrade(ResourceType type)
+    public void SpawnHumanUpgrade()
     {
-        // Deduct improvement
-        mTotalResources[type] -= 50;
+        ApplyUpdgrade(new List<ResourceType> { ResourceType.WOOD, ResourceType.ORE }, 100);
+    }
 
-        // Apply increase
-        for (int i = 0; i < mHumans.Count; i++)
+    private void ApplyUpdgrade(List<ResourceType> types, float deductionAmount)
+    {
+        // This is for single base improvements 
+        if (types.Count == 1)
         {
-            switch (type)
+            // Deduct the cost of the upgrade
+            mTotalResources[types[0]] -= deductionAmount;
+
+            // This can be improved
+            // Check if speed is still available
+            if (mTotalResources[types[0]] < deductionAmount)
             {
-                case ResourceType.WOOD:
-                    mHumans[i].GetComponent<Human>().Speed *= 1.5f;
-                    // Check if it is still available
-                    if (mTotalResources[type] < 50)
-                    {
-                        mSpeedIncrease.interactable = false;
-                    }
-                    break;
-                case ResourceType.ORE:
-                    mHumans[i].GetComponent<Human>().InteractionTime -= 0.05f;
-                    // Check if it is still available
-                    if (mTotalResources[type] < 50)
-                    {
-                        mInteractionIncrease.interactable = false;
-                    }
-                    break;
-                case ResourceType.COAL:
-                    break;
-                case ResourceType.MEAT:
-                    break;
-                case ResourceType.MAX:
-                    break;
-                default:
-                    break;
+                mSpeedIncrease.interactable = false;
+            }
+
+            // Check if interaction is still available
+            if (mTotalResources[types[0]] < deductionAmount)
+            {
+                mInteractionIncrease.interactable = false;
+            }
+
+            // Apply increase
+            for (int y = 0; y < mHumans.Count; y++)
+            {
+                // Deduct improvement
+                switch (types[0])
+                {
+                    case ResourceType.WOOD:
+                        mHumans[y].GetComponent<Human>().Speed *= 1.5f;
+                        break;
+                    case ResourceType.ORE:
+                        mHumans[y].GetComponent<Human>().InteractionTime -= 0.05f;
+                        break;
+                    case ResourceType.COAL:
+                        break;
+                    case ResourceType.MEAT:
+                        break;
+                    case ResourceType.MAX:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            mResourceCountUI[(int)types[0]].text = mTotalResources[types[0]].ToString();
+        }
+        // This is for more complex improvements
+        else if (types.Count == 2)
+        {
+            for (int i = 0; i < types.Count; i++)
+            {
+                mTotalResources[types[i]] -= deductionAmount;
+            }
+
+            // Will have to improve how this works
+            if (types[0] == ResourceType.WOOD && types[1] == ResourceType.ORE)
+            {
+                SpawnHuman(GetFreePosition(0.0f), mHumans.Count);
             }
         }
-
-        mResourceCountUI[(int)type].text = mTotalResources[type].ToString();
     }
 
-    private Vector3 GetFreePosition(Bounds spawnBounds, float yHeight)
+    private Vector3 GetFreePosition(float yHeight)
     {
-        float x = spawnBounds.extents.x;
-        float z = spawnBounds.extents.z;
+        float x = mBounds.extents.x;
+        float z = mBounds.extents.z;
         // To stop resources spawning on top of each other
         //  First we give it a position
         Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), yHeight, UnityEngine.Random.Range(-z, z));
@@ -307,7 +308,7 @@ public class GameManager : MonoBehaviour
         // Hopefully this will help with the debugging.
         if (checkResult.Length > 1)
         {
-            newPos = GetFreePosition(spawnBounds, yHeight);
+            newPos = GetFreePosition(yHeight);
         }
 
         // Assign the free position
@@ -325,6 +326,10 @@ public class GameManager : MonoBehaviour
         {
             mInteractionIncrease.interactable = true;
         }
+        if (mTotalResources[ResourceType.WOOD] >= 100 && mTotalResources[ResourceType.ORE] >= 50)
+        {
+            mSpawnHuman.interactable = true;
+        }
     }
 
     IEnumerator PlaceObjects(List<GameObject> objectsToPlace, float yHeight)
@@ -333,11 +338,42 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < objectsToPlace.Count; i++)
         {
-            MeshCollider groundMesh = mGround.GetComponent<MeshCollider>();
-            Bounds bounds = groundMesh.bounds;
-            objectsToPlace[i].transform.position = GetFreePosition(bounds, yHeight);
+            objectsToPlace[i].transform.position = GetFreePosition(yHeight);
             mGroundSurface.BuildNavMesh();
             yield return new WaitForSeconds(0.01f);
         }
+    }
+
+    private void SpawnHuman(Vector3 newPos, float humanNumber)
+    {
+        GameObject tmp = Instantiate(mHuman, newPos, transform.rotation);
+
+        // Add the humans to the invalid positions
+        //mResourcePositions.Add(newPos);
+
+        tmp.name = $"Human{humanNumber}";
+
+        Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
+        // Set the unique icon colour for each human
+        Human human = tmp.GetComponent<Human>();
+        if (human != null)
+        {
+            human.IconColor = uniqueColor;
+        }
+
+        // Zero out the vel to try and stop the weird movement after spawning
+        if (human.Rigidbody != null)
+        {
+            human.Rigidbody.velocity = Vector3.zero;
+        }
+
+        // Set the material to match the icon color
+        Material material = tmp.GetComponent<Renderer>().material;
+        if (material != null)
+        {
+            material.color = uniqueColor;
+        }
+
+        mHumans.Add(tmp);
     }
 }

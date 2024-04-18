@@ -1727,7 +1727,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1167308414}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: IncreaseInteractionUpgrade
+        m_MethodName: SpawnHumanUpgrade
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1839,6 +1839,10 @@ PrefabInstance:
       propertyPath: mGround
       value: 
       objectReference: {fileID: 1845371753}
+    - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
+      propertyPath: mSpawnHuman
+      value: 
+      objectReference: {fileID: 986821103}
     - target: {fileID: 5614759642382754375, guid: aee8472f8efd9154cab0b6197d9fbe3a, type: 3}
       propertyPath: mMaxHumanSpawn
       value: 5
