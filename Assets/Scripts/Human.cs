@@ -116,19 +116,6 @@ public class Human : MonoBehaviour
         set { mInteractTime = value; }
     }
 
-    private void Awake()
-    {
-        mAgent = GetComponent<NavMeshAgent>();
-
-        mSpeed = mAgent.speed;
-
-        if (mAgent == null)
-        {
-            Debug.Log($"Missing agent on {name}");
-        }
-
-        mAgent.enabled = false;
-    }
     // Start is called before the first frame update
     void Start()
     {
@@ -147,6 +134,17 @@ public class Human : MonoBehaviour
         {
             Debug.Log($"Missing RB on {gameObject.name}");
         }
+
+        mAgent = GetComponent<NavMeshAgent>();
+
+        mSpeed = mAgent.speed;
+
+        if (mAgent == null)
+        {
+            Debug.Log($"Missing agent on {name}");
+        }
+
+        mAgent.enabled = false;
     }
 
     // Update is called once per frame

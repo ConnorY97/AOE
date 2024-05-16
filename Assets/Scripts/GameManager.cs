@@ -41,9 +41,21 @@ public class GameManager : MonoBehaviour
     // Private Variables
     private List<GameObject> mObjects = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
+    public List<GameObject> Humans
+    {
+        get { return mHumans; }
+    }
     private Human mCurrentHuman = null;
+    public Human CurrentHuman
+    {
+        get { return mCurrentHuman; }
+    }
     private NavMeshSurface mGroundSurface = null;
     private Dictionary<ResourceType, float> mTotalResources = new Dictionary<ResourceType, float>();
+    public Dictionary<ResourceType, float> TotalResources
+    {
+        get { return mTotalResources; }
+    }
     private List<Vector3> mResourcePositions = new List<Vector3>();
     private MeshCollider mGroundMesh = null;
     private Bounds mBounds = new Bounds();
@@ -66,7 +78,7 @@ public class GameManager : MonoBehaviour
         InitializeGame();
     }
 
-    private void InitializeGame()
+    public void InitializeGame()
     {
         mResourcePositions.Add(mHome.transform.position);
 
@@ -259,10 +271,13 @@ public class GameManager : MonoBehaviour
 
     private void UpdateResourceUI(ResourceType resourceType)
     {
-        int index = (int)resourceType;
-        if (index < mResourceCountUI.Count)
+        if (mResourceCountUI[(int)resourceType] != null)
         {
-            mResourceCountUI[index].text = mTotalResources[resourceType].ToString();
+            int index = (int)resourceType;
+            if (index < mResourceCountUI.Count)
+            {
+                mResourceCountUI[index].text = mTotalResources[resourceType].ToString();
+            }
         }
     }
 
