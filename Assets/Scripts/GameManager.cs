@@ -19,28 +19,26 @@ public enum ResourceType
 
 public class GameManager : MonoBehaviour
 {
-    // Public Vars
-    // Spawn Values
+    // Public Variables
     public int mMaxHumanSpawn = 1;
     public int mMaxTreeSpawn = 100;
     public int mMaxOreSpawn = 50;
     public float mSpawnDistance = 3;
-    // Prefabs
+
     public GameObject mGround = null;
     public GameObject mTree = null;
     public GameObject mHuman = null;
     public GameObject mOre = null;
-    // UI
+    public GameObject mHome = null;
+
     public Image mCurrentSelectedIcon = null;
     public TMP_Text mSelectedHitPoints = null;
     public List<TMP_Text> mResourceCountUI = new List<TMP_Text>();
-    // Improvements
     public Button mSpeedIncrease = null;
     public Button mInteractionIncrease = null;
     public Button mSpawnHuman = null;
-    // Game objects
-    public GameObject mHome = null;
-    // Private Vars
+
+    // Private Variables
     private List<GameObject> mObjects = new List<GameObject>();
     private List<GameObject> mHumans = new List<GameObject>();
     private Human mCurrentHuman = null;
@@ -49,165 +47,158 @@ public class GameManager : MonoBehaviour
     private List<Vector3> mResourcePositions = new List<Vector3>();
     private MeshCollider mGroundMesh = null;
     private Bounds mBounds = new Bounds();
-    // Singleton Functions
+
+    // Singleton Instance
     public static GameManager Instance { get; private set; }
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(this);
+            Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        // Add the town to the invalid positions
+        InitializeGame();
+    }
+
+    private void InitializeGame()
+    {
         mResourcePositions.Add(mHome.transform.position);
+
         if (mGround != null)
         {
-            mGroundMesh = mGround.GetComponent<MeshCollider>();
-            if (mGroundMesh != null)
-            {
-                // Getting the spawning bounds
-                mBounds = mGroundMesh.bounds;
-
-                float x = mBounds.extents.x;
-                float z = mBounds.extents.z; // Get the half size in each direction
-
-                float halfX = x / 5;
-                float halfZ = z / 5;
-                //---
-                // Create the nav mesh surface before the human,
-                //  Otherwise it gets mad there is not surface
-                mGroundSurface = mGround.GetComponent<NavMeshSurface>();
-
-                if (mGroundSurface != null)
-                {
-                    mGroundSurface.BuildNavMesh();
-                }
-                else
-                {
-                    Debug.Log("Failed to create navmesh surface");
-                }
-                //--
-                // Human spawning
-                for (int i = 0; i < mMaxHumanSpawn; i++)
-                {
-                    float posX = UnityEngine.Random.Range(-halfX, halfX);
-                    float posZ = UnityEngine.Random.Range(-halfZ, halfZ);
-                    Vector3 newPos = new Vector3(posX, 1.25f, posZ);
-                    SpawnHuman(newPos, i);
-                }
-
-                // Spawn the humans
-                StartCoroutine(PlaceObjects(mHumans, 0.5f));
-                //--
-                // Tree spawning
-                for (int i = 0; i < mMaxTreeSpawn; i++)
-                {
-                    GameObject tmp = Instantiate(mTree, new Vector3(100.0f, 100.0f, 100.0f), transform.rotation);
-
-                    tmp.name = $"Tree{i}";
-
-                    tmp.GetComponent<Trees>().Init(ResourceType.WOOD, 100.0f, 10.0f);
-
-                    mObjects.Add(tmp);
-                }
-                // --
-                // Ore spawning
-                for (int i = 0; i < mMaxOreSpawn; i++)
-                {
-                    GameObject tmp = Instantiate(mOre, new Vector3(100.0f, 100.0f, 100.0f), transform.rotation);
-
-                    tmp.name = $"Ore{i}";
-
-                    tmp.GetComponent<Ore>().Init(ResourceType.ORE, 100.0f, 10.0f);
-
-                    mObjects.Add(tmp);
-                }
-            }
-
-            if (mCurrentSelectedIcon != null)
-            {
-                mCurrentSelectedIcon.gameObject.SetActive(false);
-            }
+            InitializeGround();
+            InitializeNavMesh();
+            SpawnInitialHumans();
+            SpawnResources();
+            DisableUIIcons();
+            InitializeResourceDictionary();
         }
 
-        // Set buttons as uninteractable
-        mSpeedIncrease.interactable = false;
+        UpdateUpgradeButtons();
+    }
 
-        // Set up resource dictionary
+    private void InitializeGround()
+    {
+        mGroundMesh = mGround.GetComponent<MeshCollider>();
+        if (mGroundMesh != null)
+        {
+            mBounds = mGroundMesh.bounds;
+        }
+    }
+
+    private void InitializeNavMesh()
+    {
+        mGroundSurface = mGround.GetComponent<NavMeshSurface>();
+        if (mGroundSurface != null)
+        {
+            mGroundSurface.BuildNavMesh();
+        }
+        else
+        {
+            Debug.LogError("Failed to create NavMesh surface.");
+        }
+    }
+
+    private void SpawnInitialHumans()
+    {
+        for (int i = 0; i < mMaxHumanSpawn; i++)
+        {
+            Vector3 spawnPosition = GetRandomPositionWithinBounds();
+            SpawnHuman(spawnPosition, i);
+        }
+        StartCoroutine(PlaceObjectsOnMap(mHumans, 0.5f));
+    }
+
+    private void SpawnResources()
+    {
+        for (int i = 0; i < mMaxTreeSpawn; i++)
+        {
+            GameObject tree = Instantiate(mTree, Vector3.one * 100, Quaternion.identity);
+            tree.name = $"Tree{i}";
+            tree.GetComponent<Trees>().Init(ResourceType.WOOD, 100f, 10f);
+            mObjects.Add(tree);
+        }
+
+        for (int i = 0; i < mMaxOreSpawn; i++)
+        {
+            GameObject ore = Instantiate(mOre, Vector3.one * 100, Quaternion.identity);
+            ore.name = $"Ore{i}";
+            ore.GetComponent<Ore>().Init(ResourceType.ORE, 100f, 10f);
+            mObjects.Add(ore);
+        }
+
+        StartCoroutine(PlaceObjectsOnMap(mObjects, 0.0f));
+    }
+
+    private void DisableUIIcons()
+    {
+        if (mCurrentSelectedIcon != null)
+        {
+            mCurrentSelectedIcon.gameObject.SetActive(false);
+        }
+
+        mSpeedIncrease.interactable = false;
+    }
+
+    private void InitializeResourceDictionary()
+    {
         for (int i = 0; i < (int)ResourceType.MAX; i++)
         {
-            mTotalResources.Add((ResourceType)i, 0.0f);
+            mTotalResources.Add((ResourceType)i, 0f);
         }
-
-        // Now move all the objects onto the map and make sure they are not overlapping
-        StartCoroutine(PlaceObjects(mObjects, 0.5f));
     }
 
     private void Update()
     {
-
+        // Update logic if needed
     }
-    // Public Functions
+
     public void SetClickedObject(GameObject selectedObject, Sprite icon = null)
     {
         if (selectedObject != null)
         {
-            if (selectedObject.GetComponent<Human>() != null)
+            var human = selectedObject.GetComponent<Human>();
+            var resource = selectedObject.GetComponent<Resource>();
+
+            if (human != null)
             {
-                mCurrentHuman = selectedObject.GetComponent<Human>();
-                mCurrentSelectedIcon.sprite = icon;
-                mCurrentSelectedIcon.color = mCurrentHuman.IconColor;
-                mCurrentSelectedIcon.gameObject.SetActive(true);
-                //SetHitPointsUI(mCurrentHuman.HitPoints);
+                mCurrentHuman = human;
+                UpdateSelectedIcon(icon, human.IconColor);
             }
-            else if (selectedObject.GetComponent<Resource>() != null && mCurrentHuman != null)
+            else if (resource != null && mCurrentHuman != null)
             {
-                mCurrentHuman.Target = selectedObject.GetComponent<Resource>();
+                mCurrentHuman.Target = resource;
             }
             else
             {
                 mCurrentHuman = null;
-                mCurrentSelectedIcon = null;
-                //mCurrentTree = null;
+                mCurrentSelectedIcon.gameObject.SetActive(false);
             }
         }
     }
 
     public void RegenerateNavSurface()
     {
-        if (mGroundSurface != null)
-        {
-            mGroundSurface.BuildNavMesh();
-            //Debug.Log("Regenerated");
-        }
+        mGroundSurface?.BuildNavMesh();
     }
 
-    public GameObject GetHome() {  return mHome; }
+    public GameObject GetHome() => mHome;
+
     public void IncrementResource(Dictionary<ResourceType, float> returnResources)
     {
-        // Pass over returned resources
-        for (int i = 0; i < (int)ResourceType.MAX; i++)
+        foreach (var resource in returnResources)
         {
-            mTotalResources[(ResourceType)i] += returnResources[(ResourceType)i];
-
-
-            // Get rid of this once I have all the UI set up
-            // Bandaid to stop out of bounds error
-            if (i < mResourceCountUI.Count)
-            {
-                mResourceCountUI[i].text = mTotalResources[(ResourceType)i].ToString();
-            }
+            mTotalResources[resource.Key] += resource.Value;
+            UpdateResourceUI(resource.Key);
         }
 
-        CheckUpgradeAvailability();
+        UpdateUpgradeButtons();
     }
 
     public void SetHitPointsUI(float value)
@@ -215,173 +206,126 @@ public class GameManager : MonoBehaviour
         mSelectedHitPoints.text = $"Current hitpoints: {value}";
     }
 
-    // Private Functions
     public void IncreaseSpeedUpgrade()
     {
-        ApplyUpdgrade(new List<ResourceType> { ResourceType.WOOD }, 50.0f);
+        ApplyUpgrade(new List<ResourceType> { ResourceType.WOOD }, 50f);
     }
 
     public void IncreaseInteractionUpgrade()
     {
-        ApplyUpdgrade(new List<ResourceType> { ResourceType.ORE }, 50.0f);
+        ApplyUpgrade(new List<ResourceType> { ResourceType.ORE }, 50f);
     }
 
     public void SpawnHumanUpgrade()
     {
-        ApplyUpdgrade(new List<ResourceType> { ResourceType.WOOD, ResourceType.ORE }, 100);
+        ApplyUpgrade(new List<ResourceType> { ResourceType.WOOD, ResourceType.ORE }, 100f);
     }
 
-    private void ApplyUpdgrade(List<ResourceType> types, float deductionAmount)
+    private void ApplyUpgrade(List<ResourceType> resourceTypes, float deductionAmount)
     {
-        // This is for single base improvements 
-        if (types.Count == 1)
+        foreach (var resourceType in resourceTypes)
         {
-            // Deduct the cost of the upgrade
-            mTotalResources[types[0]] -= deductionAmount;
-            // Apply increase
-            for (int y = 0; y < mHumans.Count; y++)
-            {
-                // Deduct improvement
-                switch (types[0])
-                {
-                    case ResourceType.WOOD:
-                        mHumans[y].GetComponent<Human>().Speed *= 1.5f;
-                        break;
-                    case ResourceType.ORE:
-                        mHumans[y].GetComponent<Human>().InteractionTime -= 0.05f;
-                        break;
-                    case ResourceType.COAL:
-                        break;
-                    case ResourceType.MEAT:
-                        break;
-                    case ResourceType.MAX:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            mResourceCountUI[(int)types[0]].text = mTotalResources[types[0]].ToString();
-        }
-        // This is for more complex improvements
-        else if (types.Count == 2)
-        {
-            for (int i = 0; i < types.Count; i++)
-            {
-                mTotalResources[types[i]] -= deductionAmount;
-                mResourceCountUI[(int)types[i]].text = mTotalResources[types[i]].ToString();
-            }
-
-            // Will have to improve how this works
-            if (types[0] == ResourceType.WOOD && types[1] == ResourceType.ORE)
-            {
-                SpawnHuman(GetFreePosition(0.0f), mHumans.Count);
-
-                if (mTotalResources[ResourceType.WOOD] <= 100 && mTotalResources[ResourceType.ORE] <= 100)
-                {
-                    mSpawnHuman.interactable = false;
-                }
-            }
+            mTotalResources[resourceType] -= deductionAmount;
+            UpdateResourceUI(resourceType);
         }
 
-        CheckUpgradeAvailability();
+        if (resourceTypes.Count == 1)
+        {
+            ApplySingleUpgrade(resourceTypes[0]);
+        }
+        else if (resourceTypes.Count == 2)
+        {
+            SpawnHuman(GetFreePosition(0f), mHumans.Count);
+        }
+
+        UpdateUpgradeButtons();
+    }
+
+    private void ApplySingleUpgrade(ResourceType resourceType)
+    {
+        foreach (var human in mHumans)
+        {
+            var humanComponent = human.GetComponent<Human>();
+            if (resourceType == ResourceType.WOOD)
+            {
+                humanComponent.Speed *= 1.5f;
+            }
+            else if (resourceType == ResourceType.ORE)
+            {
+                humanComponent.InteractionTime -= 0.05f;
+            }
+        }
+    }
+
+    private void UpdateResourceUI(ResourceType resourceType)
+    {
+        int index = (int)resourceType;
+        if (index < mResourceCountUI.Count)
+        {
+            mResourceCountUI[index].text = mTotalResources[resourceType].ToString();
+        }
+    }
+
+    private void UpdateUpgradeButtons()
+    {
+        mSpeedIncrease.interactable = mTotalResources[ResourceType.WOOD] >= 50;
+        mInteractionIncrease.interactable = mTotalResources[ResourceType.ORE] >= 50;
+        mSpawnHuman.interactable = mTotalResources[ResourceType.WOOD] >= 100 && mTotalResources[ResourceType.ORE] >= 100;
     }
 
     private Vector3 GetFreePosition(float yHeight)
     {
-        float x = mBounds.extents.x;
-        float z = mBounds.extents.z;
-        // To stop resources spawning on top of each other
-        //  First we give it a position
-        Vector3 newPos = new Vector3(UnityEngine.Random.Range(-x, x), yHeight, UnityEngine.Random.Range(-z, z));
+        Vector3 newPos = GetRandomPositionWithinBounds(yHeight);
 
-        // Trying a new method for spawning objects.
-        // Rather than going through a list of position, I will shpere cast at the spawn location a check if there is anything other than the ground there.
-        var checkResult = Physics.OverlapSphere(newPos, mSpawnDistance);
-
-        // Recusrsion keep checkign till we find a free stop.
-        // Hopefully this will help with the debugging.
-        if (checkResult.Length > 1)
+        while (Physics.OverlapSphere(newPos, mSpawnDistance).Length > 1)
         {
-            newPos = GetFreePosition(yHeight);
+            newPos = GetRandomPositionWithinBounds(yHeight);
         }
 
-        // Assign the free position
         return newPos;
     }
 
-    private void CheckUpgradeAvailability()
+    private Vector3 GetRandomPositionWithinBounds(float yHeight = 0f)
     {
-        // Check for upgrade availability
-        if (mTotalResources[ResourceType.WOOD] >= 50)
-        {
-            mSpeedIncrease.interactable = true;
-        }
-        else
-        {
-            mSpeedIncrease.interactable = false;
-        }
-
-        if (mTotalResources[ResourceType.ORE] >= 50)
-        {
-            mInteractionIncrease.interactable = true;
-        }
-        else
-        {
-            mInteractionIncrease.interactable = false;
-        }
-
-        if (mTotalResources[ResourceType.WOOD] >= 100 && mTotalResources[ResourceType.ORE] >= 100)
-        {
-            mSpawnHuman.interactable = true;
-        }
-        else
-        {
-            mSpawnHuman.interactable = false;
-        }
+        float x = mBounds.extents.x;
+        float z = mBounds.extents.z;
+        return new Vector3(UnityEngine.Random.Range(-x, x), yHeight, UnityEngine.Random.Range(-z, z));
     }
 
-    IEnumerator PlaceObjects(List<GameObject> objectsToPlace, float yHeight)
+    private IEnumerator PlaceObjectsOnMap(List<GameObject> objectsToPlace, float yHeight)
     {
-        //yield on a new YieldInstruction that waits for 5 seconds.
-
-        for (int i = 0; i < objectsToPlace.Count; i++)
+        foreach (var obj in objectsToPlace)
         {
-            objectsToPlace[i].transform.position = GetFreePosition(yHeight);
+            obj.transform.position = GetFreePosition(yHeight);
             mGroundSurface.BuildNavMesh();
             yield return new WaitForSeconds(0.01f);
         }
     }
 
-    private void SpawnHuman(Vector3 newPos, float humanNumber)
+    private void SpawnHuman(Vector3 newPos, int humanNumber)
     {
-        GameObject tmp = Instantiate(mHuman, newPos, transform.rotation);
+        var humanObj = Instantiate(mHuman, newPos, Quaternion.identity);
+        humanObj.name = $"Human{humanNumber}";
 
-        // Add the humans to the invalid positions
-        //mResourcePositions.Add(newPos);
-
-        tmp.name = $"Human{humanNumber}";
-
-        Color uniqueColor = new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
-        // Set the unique icon colour for each human
-        Human human = tmp.GetComponent<Human>();
-        if (human != null)
+        var humanComponent = humanObj.GetComponent<Human>();
+        if (humanComponent != null)
         {
-            human.IconColor = uniqueColor;
+            var uniqueColor = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), 1f);
+            humanComponent.IconColor = uniqueColor;
+            if (humanComponent.Rigidbody != null)
+            {
+                humanComponent.Rigidbody.velocity = Vector3.zero;
+            }
+            humanObj.GetComponent<Renderer>().material.color = uniqueColor;
         }
 
-        // Zero out the vel to try and stop the weird movement after spawning
-        if (human.Rigidbody != null)
-        {
-            human.Rigidbody.velocity = Vector3.zero;
-        }
+        mHumans.Add(humanObj);
+    }
 
-        // Set the material to match the icon color
-        Material material = tmp.GetComponent<Renderer>().material;
-        if (material != null)
-        {
-            material.color = uniqueColor;
-        }
-
-        mHumans.Add(tmp);
+    private void UpdateSelectedIcon(Sprite icon, Color color)
+    {
+        mCurrentSelectedIcon.sprite = icon;
+        mCurrentSelectedIcon.color = color;
+        mCurrentSelectedIcon.gameObject.SetActive(true);
     }
 }
