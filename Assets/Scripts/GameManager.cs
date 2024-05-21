@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
     public float mSpawnDistance = 3;
 
     public GameObject mGround = null;
-    public GameObject mTree = null;
+    public List<GameObject> mTrees = new List<GameObject>();
     public GameObject mHuman = null;
     public GameObject mOre = null;
     public GameObject mHome = null;
@@ -131,7 +131,8 @@ public class GameManager : MonoBehaviour
     {
         for (int i = 0; i < mMaxTreeSpawn; i++)
         {
-            GameObject tree = Instantiate(mTree, Vector3.one * 100, Quaternion.identity);
+            int rand = UnityEngine.Random.Range(0, mTrees.Count - 1);
+            GameObject tree = Instantiate(mTrees[rand], Vector3.one * 100, Quaternion.identity);
             tree.name = $"Tree{i}";
             tree.GetComponent<Trees>().Init(ResourceType.WOOD, 100f, 10f);
             mObjects.Add(tree);
@@ -146,6 +147,9 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(PlaceObjectsOnMap(mObjects, 0.0f));
+
+        // Build the nav mesh after all the objects have been placed
+        mGroundSurface.BuildNavMesh();
     }
 
     private void DisableUIIcons()
@@ -271,12 +275,15 @@ public class GameManager : MonoBehaviour
 
     private void UpdateResourceUI(ResourceType resourceType)
     {
-        if (mResourceCountUI[(int)resourceType] != null)
+        if ((int)resourceType < mResourceCountUI.Count)
         {
-            int index = (int)resourceType;
-            if (index < mResourceCountUI.Count)
+            if (mResourceCountUI[(int)resourceType] != null)
             {
-                mResourceCountUI[index].text = mTotalResources[resourceType].ToString();
+                int index = (int)resourceType;
+                if (index < mResourceCountUI.Count)
+                {
+                    mResourceCountUI[index].text = mTotalResources[resourceType].ToString();
+                }
             }
         }
     }
@@ -312,7 +319,6 @@ public class GameManager : MonoBehaviour
         foreach (var obj in objectsToPlace)
         {
             obj.transform.position = GetFreePosition(yHeight);
-            mGroundSurface.BuildNavMesh();
             yield return new WaitForSeconds(0.01f);
         }
     }
